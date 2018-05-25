@@ -2,6 +2,7 @@ from ai import AI
 import random
 import math
 import collections
+from ai.mcts_tree import MCTSState, UCTSearch
 
 class SDAI(AI):
     """
@@ -22,8 +23,10 @@ class SDAI(AI):
                                    }
         self.unique_enemy_weight = -0.07
         self.pair_friendly_weight = 0.96
+        self.previous_action = None
         #dropped the coefficient "first to play" cause we dont have an impact on this
 
+    #archaic
     def value_of_land(self):
         player_scores = {}
         for player in self.game.players:
@@ -48,7 +51,9 @@ class SDAI(AI):
         
     def initial_placement(self, empty, remaining):
         if empty:
-            return random.choice(empty)
+            action = UCTSearch(MCTSState(self.player,self.player.territories,self.previous_action))
+            self.previous_action = action
+            return action
         else:
             t = random.choice(list(self.player.territories))
             return t

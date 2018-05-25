@@ -100,6 +100,11 @@ class World(object):
         self.territories = {}
         self.areas = {}
 
+    def __deepcopy__(self,memo):
+        newobj = World()
+        newobj.__dict__.update(deepcopy(self.__dict__,memo))
+        return newobj
+
     def territory(self, t):
         if t in self.territories.keys():
             return self.territories[t]
