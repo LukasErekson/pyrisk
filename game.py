@@ -222,12 +222,12 @@ class Game(object):
         else:
             while empty:
                 choice = self.player.ai.initial_placement(empty, remaining[self.player.name])
-                t = self.world.territory(choice)
+                t = self.world.territory(choice.name)
                 if t is None:
                     self.aiwarn("invalid territory choice %s", choice)
                     self.turn += 1
                     continue
-                if t not in empty:
+                elif t not in empty:
                     self.aiwarn("initial invalid empty territory %s", t.name)
                     self.turn += 1
                     continue
@@ -236,6 +236,7 @@ class Game(object):
                 remaining[self.player.name] -= 1
                 empty.remove(t)
                 self.event(("claim", self.player, t), territory=[t], player=[self.player.name])
+                LOG.info(str(list([(t,t.owner) for t in self.world.territories.values()])))
                 self.turn += 1
         
         while sum(remaining.values()) > 0:

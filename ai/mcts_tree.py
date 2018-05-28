@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import random
+import time
 import math
 import hashlib
 from copy import deepcopy
+from itertools import islice
 
 class MCTSNode(object):
     def __init__(self,state,parent=None):
@@ -22,16 +24,20 @@ class MCTSNode(object):
         self.visits+=1
 
     def fully_expanded(self):
-        if len(self.children)==self.state.num_moves:
+        if len(self.children)==len(self.state.empty):
             return True
         return False
+
+    def __repr__(self):
+        s="Node; children %d; visits %d; reward %d"%(len(self.children),self.visits,self.reward)
+        return s
         
 class MCTSState(object):
     def __init__(self,player,territories,action=None):
         # on va copier l'etat du monde, remplir aleatoirement pour les autres joueurs (? ou appeller leur IA ? triche)
         # puis on cree un noeud avec l'etat d'apres et on continue
         #todo clean, et repasser sur gym
-        self.territories = deepcopy(list(territories))
+        self.territories = territories
         self.player = player
         self.players = player.ai.game.players
         self.empty = [ t for t in self.territories if t.owner == None ]
@@ -53,18 +59,28 @@ class MCTSState(object):
         #dropped the coefficient "first to play" cause we dont have an impact on this
 
     def next_random_state(self):
-        for i in self.players[self.play_order::1]:
-            t = random.choice(self.empty)
-            self.empty.remove(t)
+        #travailler sur noms pour rapidité
+        terri = deepcopy(self.territories)
+        empt = [ t for t in terri if t.owner == None ]
+        tt = random.choice(empt)
+        empt.remove(tt)
+        tt.owner = self.player
+        action = tt
+        #in case we run out of territories in the middle : todo
+        for i in islice(self.players.values(),self.play_order+1,None,1):
+            if len(empt)==0:
+                break
+            t = random.choice(empt)
+            empt.remove(t)
             t.owner = i
-            if i == self.player:
-                action = t
         if self.play_order > 0:
-            for i in self.players[0:self.play_order]:
-                t = random.choice(self.empty)
-            self.empty.remove(t)
-            t.owner = i
-        return MCTSState(self.player,self.territories,action)
+            for i in islice(self.players.values(),0,self.play_order,1):
+                if len(empt)==0:
+                    break
+                t = random.choice(empt)
+                empt.remove(t)
+                t.owner = i
+        return MCTSState(self.player,terri,action)
                 
     def reward(self):
         player_scores = {}
@@ -100,21 +116,21 @@ class MCTSState(object):
         if hash(self)==hash(other):
             return True
         return False
-    
+
 def UCTSearch(state0):
     #we set 100 prediction loop by default, TODO
     node0 = MCTSNode(state0)
-    for i in range(100):
+    for i in range(2):
         node1 = TreePolicy(node0)
         reward = DefaultPolicy(node1.state)
         Backup(node1,reward)
-    return BestChild(node0,0).action
-
+    x = BestChild(node0,0).state.action
+    return x
+    
 def TreePolicy(node):
     while not node.state.terminal():
-        print("loop tree policy")
         if not node.fully_expanded():
-            #to balance
+            #todo balance
             return Expand(node)
         else:
             #Constant CP d'explo : 1/sqrt(2)

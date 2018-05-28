@@ -3,6 +3,7 @@ import random
 import math
 import collections
 from ai.mcts_tree import MCTSState, UCTSearch
+from copy import deepcopy
 
 class SDAI(AI):
     """
@@ -26,32 +27,9 @@ class SDAI(AI):
         self.previous_action = None
         #dropped the coefficient "first to play" cause we dont have an impact on this
 
-    #archaic
-    def value_of_land(self):
-        player_scores = {}
-        for player in self.game.players:
-            score = 0
-            unique_enemy = set()
-            allied_pairs = 0
-            for t in player.territories:
-                for u in t.adjacent(None,None):
-                    if u.owner != None and u.owner != player:
-                        unique_enemy.add(u)
-                    elif u.owner == player:
-                        allied_pairs = allied_pairs + 0.5
-            score = len(unique_enemy)*self.unique_enemy_weight + allied_pairs *  self.pair_friendly_weight
-            for area in self.player.world.areas.keys():
-                count = 0
-                for t in self.player.territories:
-                    if t.area.name == area:
-                        count = count + 1
-                score = score + self.territory_weights[area][count]
-            player_scores[player.name]=score
-        return player_scores[self.player.name]/sum(player_scores.values())
-        
     def initial_placement(self, empty, remaining):
         if empty:
-            action = UCTSearch(MCTSState(self.player,self.player.territories,self.previous_action))
+            action = UCTSearch(MCTSState(self.player,deepcopy(list(self.world.territories.values())),self.previous_action))
             self.previous_action = action
             return action
         else:
