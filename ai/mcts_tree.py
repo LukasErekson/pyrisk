@@ -22,7 +22,7 @@ class MCTSNode(object):
     def update(self,reward):
         self.reward+=reward
         self.visits+=1
-
+        #does it even work?
     def fully_expanded(self):
         if len(self.children)==len(self.state.empty):
             return True
@@ -31,16 +31,18 @@ class MCTSNode(object):
     def __repr__(self):
         s="Node; children %d; visits %d; reward %d"%(len(self.children),self.visits,self.reward)
         return s
-        
+
+
 class MCTSState(object):
+    """on a oublié la value"""
     def __init__(self,player,territories,action=None):
         # on va copier l'etat du monde, remplir aleatoirement pour les autres joueurs (? ou appeller leur IA ? triche)
         # puis on cree un noeud avec l'etat d'apres et on continue
         #todo clean, et repasser sur gym
-        self.territories = territories
+        self.territories = deepcopy(territories)
         self.player = player
         self.players = player.ai.game.players
-        self.empty = [ t for t in self.territories if t.owner == None ]
+        self.empty = [ x for x in self.territories if x.owner == None]
         self.value = 0
         self.action=action
         #0 if first, 1 if second etc
@@ -61,7 +63,7 @@ class MCTSState(object):
     def next_random_state(self):
         #travailler sur noms pour rapidité
         terri = deepcopy(self.territories)
-        empt = [ t for t in terri if t.owner == None ]
+        empt = [ x for x in terri if x.owner == None]
         tt = random.choice(empt)
         empt.remove(tt)
         tt.owner = self.player
@@ -97,11 +99,11 @@ class MCTSState(object):
             score = len(unique_enemy)*self.unique_enemy_weight + allied_pairs *  self.pair_friendly_weight
             for area in self.player.world.areas.keys():
                 count = 0
-                for t in self.player.territories:
-                    if t.area.name == area:
+                for t in self.territories:
+                    if t.area.name == area and t.owner == self.player :
                         count = count + 1
                 score = score + self.territory_weights[area][count]
-            player_scores[player.name]=score
+            player_scores[player.name]=max(score,0)
         return player_scores[self.player.name]/sum(player_scores.values())
 
     def terminal(self):
@@ -110,17 +112,22 @@ class MCTSState(object):
         return False
 
     def __hash__(self):
-        return int(hashlib.md5(str(self.territories).encode('utf-8')).hexdigest(),16)
+        # à ameliorer
+        return int(hashlib.md5((str(self.territories)+str(self.empty)+str(self.action)).encode('utf-8')).hexdigest(),16)
 
     def __eq__(self,other):
         if hash(self)==hash(other):
             return True
         return False
 
+    def __repr__(self):
+        s="Empty=%s;Action=%s"%(str(len(self.empty)),str(self.action))
+        return s
+
 def UCTSearch(state0):
     #we set 100 prediction loop by default, TODO
     node0 = MCTSNode(state0)
-    for i in range(2):
+    for i in range(25):
         node1 = TreePolicy(node0)
         reward = DefaultPolicy(node1.state)
         Backup(node1,reward)
@@ -129,12 +136,21 @@ def UCTSearch(state0):
     
 def TreePolicy(node):
     while not node.state.terminal():
-        if not node.fully_expanded():
+        #if not node.fully_expanded():
             #todo balance
+        #    return Expand(node)
+        #else:
+        #    #Constant CP d'explo : 1/sqrt(2)
+        #    node = BestChild(Node,1/math.sqrt(2))
+        if len(node.children)==0:
             return Expand(node)
+        elif random.uniform(0,1)<0.5:
+            node = BestChild(node,1/math.sqrt(2))
         else:
-            #Constant CP d'explo : 1/sqrt(2)
-            node = BestChild(Node,1/math.sqrt(2))
+            if not node.fully_expanded():
+                return Expand(node)
+            else:
+                node = BestChild(node,1/math.sqrt(2))
     return node
 
 def Expand(node):

@@ -227,7 +227,7 @@ class Game(object):
                     self.aiwarn("invalid territory choice %s", choice)
                     self.turn += 1
                     continue
-                elif t not in empty:
+                if t not in empty:
                     self.aiwarn("initial invalid empty territory %s", t.name)
                     self.turn += 1
                     continue
@@ -236,7 +236,6 @@ class Game(object):
                 remaining[self.player.name] -= 1
                 empty.remove(t)
                 self.event(("claim", self.player, t), territory=[t], player=[self.player.name])
-                LOG.info(str(list([(t,t.owner) for t in self.world.territories.values()])))
                 self.turn += 1
         
         while sum(remaining.values()) > 0:
