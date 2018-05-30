@@ -144,7 +144,7 @@ def UCTSearch(state0):
         define_neighbours(state0.player.world)
     #we set 100 prediction loop by default, TODO
     node0 = MCTSNode(state0)
-    for i in range(100):
+    for i in range(3000):
         node1 = TreePolicy(node0)
         reward = DefaultPolicy(node1.state)
         Backup(node1,reward)
@@ -163,12 +163,13 @@ def TreePolicy(node):
         if len(node.children)==0:
             return Expand(node)
         elif random.uniform(0,1)<0.5:
-            node = BestChild(node,1/math.sqrt(2))
+            #d'après papier mieux vaut utiliser 0.01 que 1/math.sqrt(2)
+            node = BestChild(node,0.01)
         else:
             if not node.fully_expanded():
                 return Expand(node)
             else:
-                node = BestChild(node,1/math.sqrt(2))
+                node = BestChild(node,0.01)
     return node
 
 def Expand(node):
@@ -184,7 +185,8 @@ def BestChild(node, coefficient):
     bestchildren=[]
     for c in node.children:
         exploit=c.reward/c.visits
-        explore=math.sqrt(2.0*math.log(node.visits)/float(c.visits))
+        #d'après le papier on enleve le 2*log
+        explore=math.sqrt(math.log(node.visits)/float(c.visits))
         score=exploit+coefficient*explore
         if score == bestscore:
             bestchildren.append(c)
