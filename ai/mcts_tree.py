@@ -49,7 +49,7 @@ class MCTSNode(object):
 
 class MCTSState(object):
     """on a oublié la value"""
-    def __init__(self,player,territories,actions=[]):
+    def __init__(self,player,territories,action=None):
         # on va copier l'etat du monde, remplir aleatoirement pour les autres joueurs (? ou appeller leur IA ? triche)
         # puis on cree un noeud avec l'etat d'apres et on continue
         #todo clean, et repasser sur gym
@@ -58,7 +58,7 @@ class MCTSState(object):
         self.players = player.ai.game.players
         self.empty = [ name for name,owner in self.territories.items() if owner == None ]
         self.value = 0
-        self.actions=actions
+        self.action=action
         #0 if first, 1 if second etc
         self.play_order=player.ai.game.turn_order.index(self.player.name)
         #taken from "au automated technique for drafting territories in the board game risk
@@ -88,9 +88,7 @@ class MCTSState(object):
                 t = random.choice(empt)
                 empt.remove(t)
                 terri[t] = i
-        new_ac = list(self.actions)
-        new_ac.append(tt)
-        return MCTSState(self.player,terri,new_ac)
+        return MCTSState(self.player,terri,tt)
                 
     def reward(self):
         player_scores = {}
@@ -111,6 +109,11 @@ class MCTSState(object):
                     if self.territories[terri] == self.player.name:
                         count = count + 1
                 score = score + AREA_WEIGHT[area][count]
+            #just for 3 players
+            if self.play_order == 0:
+                score = score + 13.38
+            elif self.play_order == 1:
+                score = score + 5.35
             player_scores[player.name]=max(score,0)
         return player_scores[self.player.name]/sum(player_scores.values())
 
@@ -121,7 +124,7 @@ class MCTSState(object):
 
     def __hash__(self):
         # à ameliorer
-        return int(hashlib.md5((str(self.territories)+str(self.empty)+str(self.actions)).encode('utf-8')).hexdigest(),16)
+        return int(hashlib.md5((str(self.territories)+str(self.action)).encode('utf-8')).hexdigest(),16)
 
     def __eq__(self,other):
         if hash(self)==hash(other):
@@ -141,12 +144,12 @@ def UCTSearch(state0):
         define_neighbours(state0.player.world)
     #we set 100 prediction loop by default, TODO
     node0 = MCTSNode(state0)
-    for i in range(10):
+    for i in range(100):
         node1 = TreePolicy(node0)
         reward = DefaultPolicy(node1.state)
         Backup(node1,reward)
         #à revoir ce qu'on renvoie
-    x = BestChild(node0,0).state.actions
+    x = BestChild(node0,0).state.action
     return x
     
 def TreePolicy(node):
