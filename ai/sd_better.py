@@ -5,7 +5,7 @@ import collections
 from ai.mcts_tree import MCTSState, UCTSearch
 from copy import deepcopy
 
-class SDAI(AI):
+class SD_BetterAI(AI):
     """
     Smart drafting : plays randomly like the stupid AI, except for the drafting (placement) phase where it uses MCTS with UCT to find the best countries.
     """
@@ -24,29 +24,52 @@ class SDAI(AI):
                                    }
         self.unique_enemy_weight = -0.07
         self.pair_friendly_weight = 0.96
-        self.previous_action = None
+        self.previous_action = []
         #dropped the coefficient "first to play" cause we dont have an impact on this
 
     def initial_placement(self, empty, remaining):
         if empty:
             action = UCTSearch(MCTSState(self.player,deepcopy(list(self.world.territories.values())),self.previous_action))
             self.previous_action = action
-            return action
+            return action[-1]
         else:
             t = random.choice(list(self.player.territories))
             return t
+
+    def priority(self):
+        priority = sorted([t for t in self.player.territories if t.border], 
+                          key=lambda x: self.area_priority.index(x.area.name))
+        priority = [t for t in priority if t.area == priority[0].area]
+        return priority if priority else list(self.player.territories)
+   
+
         
+    def reinforce(self, available):
+        priority = self.priority()
+        result = collections.defaultdict(int)
+        while available:
+            result[random.choice(priority)] += 1
+            available -= 1
+        return result
+
     def attack(self):
         for t in self.player.territories:
-            for a in t.connect:
-                if a.owner != self.player:
-                    if t.forces > a.forces:
-                        yield (t, a, None, None)
-
-    def reinforce(self, available):
-        border = [t for t in self.player.territories if t.border]
-        result = collections.defaultdict(int)
-        for i in range(available):
-            t = random.choice(border)
-            result[t] += 1
-        return result
+            if t.forces > 1:
+                adjacent = [a for a in t.connect if a.owner != t.owner and t.forces >= a.forces + 3]
+                if len(adjacent) == 1:
+                        yield (t.name, adjacent[0].name, 
+                               lambda a, d: a > d, None)
+                else:
+                    total = sum(a.forces for a in adjacent)
+                    for adj in adjacent:
+                        yield (t, adj, lambda a, d: a > d + total - adj.forces + 3, 
+                               lambda a: 1)
+    
+    def freemove(self):
+        srcs = sorted([t for t in self.player.territories if not t.border], 
+                      key=lambda x: x.forces)
+        if srcs:
+            src = srcs[-1]
+            n = src.forces - 1
+            return (src, self.priority()[0], n)
+        return None

@@ -3,8 +3,23 @@ import random
 import time
 import math
 import hashlib
-from copy import deepcopy
+from copy import deepcopy,copy
 from itertools import islice
+from world import AREAS
+
+#CONSTS
+AREA_WEIGHT = { "Australia" : [2.97,0,8.45,9.99,10.71],
+                                   "South America" : [0.69,1.23,3.90,0,17.72],
+                                   "Africa" : [14.40,12.87,10.72,7.16,1.23,0,29.80],
+                                   "North America" : [3.11,0.98,0,2.17,7.15,19.35,24.82,24.10,36.15,48.20],
+                                   "Europe" : [42.33,45.11,43.11,43.77,41.35,50.77,43.85,36.93],
+                                   "Asia" : [27.10,23.90,23.61,23.10,23.61,23.68,19.32,15.63,17.43,13.84,10.25,6.66,3.07]
+                                   }
+UNIQUE_ENEMY_WEIGHT = -0.07
+PAIR_FRIENDLY_WEIGHT= 0.96
+
+AREA_TERRITORIES = {key: value[1] for (key,value) in AREAS.items()}
+TERRITORIES_NEIGHBOUR = {}
 
 class MCTSNode(object):
     def __init__(self,state,parent=None):
@@ -32,41 +47,32 @@ class MCTSNode(object):
         s="Node; children %d; visits %d; reward %d"%(len(self.children),self.visits,self.reward)
         return s
 
-
 class MCTSState(object):
     """on a oublié la value"""
-    def __init__(self,player,territories,action=None):
+    def __init__(self,player,territories,actions=[]):
         # on va copier l'etat du monde, remplir aleatoirement pour les autres joueurs (? ou appeller leur IA ? triche)
         # puis on cree un noeud avec l'etat d'apres et on continue
         #todo clean, et repasser sur gym
-        self.territories = deepcopy(territories)
+        self.territories = territories
         self.player = player
         self.players = player.ai.game.players
-        self.empty = [ x for x in self.territories if x.owner == None]
+        self.empty = [ name for name,owner in self.territories.items() if owner == None ]
         self.value = 0
-        self.action=action
+        self.actions=actions
         #0 if first, 1 if second etc
         self.play_order=player.ai.game.turn_order.index(self.player.name)
         #taken from "au automated technique for drafting territories in the board game risk
         # "An Automated Technique for Drafting Territories in the Board Game RIsk" FOR 3 PLAYERS
-        self.territory_weights = { "Australia" : [2.97,0,8.45,9.99,10.71],
-                                   "South America" : [0.69,1.23,3.90,0,17.72],
-                                   "Africa" : [14.40,12.87,10.72,7.16,1.23,0,29.80],
-                                   "North America" : [3.11,0.98,0,2.17,7.15,19.35,24.82,24.10,36.15,48.20],
-                                   "Europe" : [42.33,45.11,43.11,43.77,41.35,50.77,43.85,36.93],
-                                   "Asia" : [27.10,23.90,23.61,23.10,23.61,23.68,19.32,15.63,17.43,13.84,10.25,6.66,3.07]
-                                   }
-        self.unique_enemy_weight = -0.07
-        self.pair_friendly_weight = 0.96
+        
         #dropped the coefficient "first to play" cause we dont have an impact on this
 
     def next_random_state(self):
         #travailler sur noms pour rapidité
-        terri = deepcopy(self.territories)
-        empt = [ x for x in terri if x.owner == None]
+        terri = self.territories.copy()
+        empt = [ name for name,owner in self.territories.items() if owner == None ]
         tt = random.choice(empt)
         empt.remove(tt)
-        tt.owner = self.player
+        terri[tt] = self.player.name
         action = tt
         #in case we run out of territories in the middle : todo
         for i in islice(self.players.values(),self.play_order+1,None,1):
@@ -74,15 +80,17 @@ class MCTSState(object):
                 break
             t = random.choice(empt)
             empt.remove(t)
-            t.owner = i
+            terri[t] = i
         if self.play_order > 0:
             for i in islice(self.players.values(),0,self.play_order,1):
                 if len(empt)==0:
                     break
                 t = random.choice(empt)
                 empt.remove(t)
-                t.owner = i
-        return MCTSState(self.player,terri,action)
+                terri[t] = i
+        new_ac = list(self.actions)
+        new_ac.append(tt)
+        return MCTSState(self.player,terri,new_ac)
                 
     def reward(self):
         player_scores = {}
@@ -90,19 +98,19 @@ class MCTSState(object):
             score = 0
             unique_enemy = set()
             allied_pairs = 0
-            for t in player.territories:
-                for u in t.adjacent(None,None):
-                    if u.owner != None and u.owner != player:
+            for t in self.territories.keys():
+                for u in TERRITORIES_NEIGHBOUR[t]:
+                    if self.territories[u] != None and self.territories[u] != player.name:
                         unique_enemy.add(u)
-                    elif u.owner == player:
+                    elif self.territories[u] == player.name:
                         allied_pairs = allied_pairs + 0.5
-            score = len(unique_enemy)*self.unique_enemy_weight + allied_pairs *  self.pair_friendly_weight
-            for area in self.player.world.areas.keys():
+            score = len(unique_enemy)*UNIQUE_ENEMY_WEIGHT + allied_pairs *  PAIR_FRIENDLY_WEIGHT
+            for area,list_terri in AREA_TERRITORIES.items():
                 count = 0
-                for t in self.territories:
-                    if t.area.name == area and t.owner == self.player :
+                for terri in list_terri:
+                    if self.territories[terri] == self.player.name:
                         count = count + 1
-                score = score + self.territory_weights[area][count]
+                score = score + AREA_WEIGHT[area][count]
             player_scores[player.name]=max(score,0)
         return player_scores[self.player.name]/sum(player_scores.values())
 
@@ -113,7 +121,7 @@ class MCTSState(object):
 
     def __hash__(self):
         # à ameliorer
-        return int(hashlib.md5((str(self.territories)+str(self.empty)+str(self.action)).encode('utf-8')).hexdigest(),16)
+        return int(hashlib.md5((str(self.territories)+str(self.empty)+str(self.actions)).encode('utf-8')).hexdigest(),16)
 
     def __eq__(self,other):
         if hash(self)==hash(other):
@@ -124,14 +132,21 @@ class MCTSState(object):
         s="Empty=%s;Action=%s"%(str(len(self.empty)),str(self.action))
         return s
 
+def define_neighbours(world):
+    for te in list(world.territories.values()):
+        TERRITORIES_NEIGHBOUR[te.name] = list([ t.name for t in list(te.adjacent(None,None))])
+    
 def UCTSearch(state0):
+    if not TERRITORIES_NEIGHBOUR:
+        define_neighbours(state0.player.world)
     #we set 100 prediction loop by default, TODO
     node0 = MCTSNode(state0)
-    for i in range(25):
+    for i in range(10):
         node1 = TreePolicy(node0)
         reward = DefaultPolicy(node1.state)
         Backup(node1,reward)
-    x = BestChild(node0,0).state.action
+        #à revoir ce qu'on renvoie
+    x = BestChild(node0,0).state.actions
     return x
     
 def TreePolicy(node):

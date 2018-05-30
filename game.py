@@ -222,7 +222,7 @@ class Game(object):
         else:
             while empty:
                 choice = self.player.ai.initial_placement(empty, remaining[self.player.name])
-                t = self.world.territory(choice.name)
+                t = self.world.territory(choice)
                 if t is None:
                     self.aiwarn("invalid territory choice %s", choice)
                     self.turn += 1
