@@ -1,20 +1,17 @@
 #!/usr/bin/python3
 import random
-import time
 import math
 import hashlib
-from copy import deepcopy,copy
 from itertools import islice
 from world import AREAS
 
 #CONSTS
 AREA_WEIGHT = { "Australia" : [2.97,0,8.45,9.99,10.71],
-                                   "South America" : [0.69,1.23,3.90,0,17.72],
-                                   "Africa" : [14.40,12.87,10.72,7.16,1.23,0,29.80],
-                                   "North America" : [3.11,0.98,0,2.17,7.15,19.35,24.82,24.10,36.15,48.20],
-                                   "Europe" : [42.33,45.11,43.11,43.77,41.35,50.77,43.85,36.93],
-                                   "Asia" : [27.10,23.90,23.61,23.10,23.61,23.68,19.32,15.63,17.43,13.84,10.25,6.66,3.07]
-                                   }
+                "South America" : [0.69,1.23,3.90,0,17.72],
+                "Africa" : [14.40,12.87,10.72,7.16,1.23,0,29.80],
+                "North America" : [3.11,0.98,0,2.17,7.15,19.35,24.82,24.10,36.15,48.20],
+                "Europe" : [42.33,45.11,43.11,43.77,41.35,50.77,43.85,36.93],
+                "Asia" : [27.10,23.90,23.61,23.10,23.61,23.68,19.32,15.63,17.43,13.84,10.25,6.66,3.07]}
 UNIQUE_ENEMY_WEIGHT = -0.07
 PAIR_FRIENDLY_WEIGHT= 0.96
 
@@ -115,7 +112,11 @@ class MCTSState(object):
             elif self.play_order == 1:
                 score = score + 5.35
             player_scores[player.name]=max(score,0)
-        return player_scores[self.player.name]/sum(player_scores.values())
+        player_rewards = {}
+        for player in self.players.values():
+            player_rewards[player.name]=player_scores[player.name]/sum(player_scores.values())
+        self.player_rewards = player_rewards
+        return player_rewards
 
     def terminal(self):
         if(len(self.empty)==0):
@@ -154,22 +155,20 @@ def UCTSearch(state0):
     
 def TreePolicy(node):
     while not node.state.terminal():
-        #if not node.fully_expanded():
-            #todo balance
-        #    return Expand(node)
-        #else:
-        #    #Constant CP d'explo : 1/sqrt(2)
-        #    node = BestChild(Node,1/math.sqrt(2))
-        if len(node.children)==0:
+        if not node.fully_expanded():
             return Expand(node)
-        elif random.uniform(0,1)<0.5:
-            #d'après papier mieux vaut utiliser 0.01 que 1/math.sqrt(2)
-            node = BestChild(node,0.01)
         else:
-            if not node.fully_expanded():
-                return Expand(node)
-            else:
-                node = BestChild(node,0.01)
+            node = BestChild(node,0.3)
+       # if len(node.children)==0:
+        #    return Expand(node)
+        #elif random.uniform(0,1)<0.5:
+            #d'après papier mieux vaut utiliser 0.01 que 1/math.sqrt(2)
+        #    node = BestChild(node,0.01)
+        #else:
+        #    if not node.fully_expanded():
+        #        return Expand(node)
+        #    else:
+        #        node = BestChild(node,0.01)
     return node
 
 def Expand(node):
@@ -194,9 +193,7 @@ def BestChild(node, coefficient):
             bestchildren=[c]
             bestscore=score
     if len(bestchildren)==0:
-        #TODO
         return "Error"
-    #TODO ?
     return random.choice(bestchildren)
 
 def DefaultPolicy(state):
