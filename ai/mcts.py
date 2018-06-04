@@ -44,7 +44,7 @@ class MCTS(object):
         best_score = 0
         best_children = []
         for c in node.children:
-            exploit = c.reward / c.visits
+            exploit = c.value / c.visits
             explore = math.sqrt(math.log(node.visits) / float(c.visits))
             score = exploit + coefficient * explore
             if score == best_score:
@@ -55,14 +55,14 @@ class MCTS(object):
         assert len(best_children) > 0, "Error : no children found"
         return random.choice(best_children)
 
-    def Backup(node, reward):
+    def Backup(self, node, reward):
         while node is not None:
             node.update(reward)
             node = node.parent
 
     def UpdateRoot(self, state):
-        for player in chain(islice(self.players.values(), self.play_order + 1, None, 1),
-                            islice(self.players.values(), 0, self.play_order, 1)):
+        for player in chain(islice(state.players.values(), state.play_order + 1, None, 1),
+                            islice(state.players.values(), 0, state.play_order, 1)):
             if self.root_node is None:
                 self.root_node = MCTSNode(state, None)
             else:

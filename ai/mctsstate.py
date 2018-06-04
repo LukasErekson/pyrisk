@@ -37,13 +37,15 @@ class MCTSState(object):
         # 0 if first, 1 if second etc
         self.play_order = player.ai.game.turn_order.index(self.player.name)
 
+    #peut etre passer sur la "montercarlorollout", une fonction dans MCTS qui va juste ajouter un territoire, s'appeller
+    #recursivement puis l'enlever
     def next_random_state(self):
         terri = self.territories.copy()
         empt = [name for name, owner in self.territories.items() if owner == None]
         action = random.choice(empt)
         empt.remove(action)
         terri[action] = self.player.name
-        return MCTSState(self.players[(self.play_order + 1) % len(self.players)], terri, action)
+        return MCTSState(self.players[self.player.ai.game.turn_order[(self.play_order+1)%len(self.players)]], terri, action)
 
     def values(self):
         player_scores = {}
@@ -75,8 +77,9 @@ class MCTSState(object):
         for player in self.players.values():
             player_rewards[player.name] = player_scores[player.name] / sum(player_scores.values())
         self.all_values = player_rewards
-        self.value = player_rewards[self.play_order]
-        return player_rewards
+        #useful ?
+        self.value = player_rewards[self.player.name]
+        return self.value
 
     def terminal(self):
         if len(self.empty) == 0:
@@ -84,7 +87,6 @@ class MCTSState(object):
         return False
 
     def __hash__(self):
-        # à ameliorer
         return int(hashlib.md5((str(self.territories)).encode('utf-8')).hexdigest(), 16)
 
     def __eq__(self, other):
