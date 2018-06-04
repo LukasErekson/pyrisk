@@ -5,18 +5,6 @@ import hashlib
 from itertools import islice
 from world import AREAS
 
-#CONSTS
-AREA_WEIGHT = { "Australia" : [2.97,0,8.45,9.99,10.71],
-                "South America" : [0.69,1.23,3.90,0,17.72],
-                "Africa" : [14.40,12.87,10.72,7.16,1.23,0,29.80],
-                "North America" : [3.11,0.98,0,2.17,7.15,19.35,24.82,24.10,36.15,48.20],
-                "Europe" : [42.33,45.11,43.11,43.77,41.35,50.77,43.85,36.93],
-                "Asia" : [27.10,23.90,23.61,23.10,23.61,23.68,19.32,15.63,17.43,13.84,10.25,6.66,3.07]}
-UNIQUE_ENEMY_WEIGHT = -0.07
-PAIR_FRIENDLY_WEIGHT= 0.96
-
-AREA_TERRITORIES = {key: value[1] for (key,value) in AREAS.items()}
-TERRITORIES_NEIGHBOUR = {}
 
 class MCTSNode(object):
     def __init__(self,state,parent=None):
@@ -136,72 +124,6 @@ class MCTSState(object):
         s="Empty=%s;Action=%s"%(str(len(self.empty)),str(self.action))
         return s
 
-def define_neighbours(world):
-    for te in list(world.territories.values()):
-        TERRITORIES_NEIGHBOUR[te.name] = list([ t.name for t in list(te.adjacent(None,None))])
-    
-def UCTSearch(state0):
-    if not TERRITORIES_NEIGHBOUR:
-        define_neighbours(state0.player.world)
-    #we set 100 prediction loop by default, TODO
-    node0 = MCTSNode(state0)
-    for i in range(3000):
-        node1 = TreePolicy(node0)
-        reward = DefaultPolicy(node1.state)
-        Backup(node1,reward)
-        #à revoir ce qu'on renvoie
-    x = BestChild(node0,0).state.action
-    return x
-    
-def TreePolicy(node):
-    while not node.state.terminal():
-        if not node.fully_expanded():
-            return Expand(node)
-        else:
-            node = BestChild(node,0.3)
-       # if len(node.children)==0:
-        #    return Expand(node)
-        #elif random.uniform(0,1)<0.5:
-            #d'après papier mieux vaut utiliser 0.01 que 1/math.sqrt(2)
-        #    node = BestChild(node,0.01)
-        #else:
-        #    if not node.fully_expanded():
-        #        return Expand(node)
-        #    else:
-        #        node = BestChild(node,0.01)
-    return node
 
-def Expand(node):
-    tried_children=[c.state for c in node.children]
-    new_state=node.state.next_random_state()
-    while new_state in tried_children:
-        new_state=node.state.next_random_state()
-    node.add_child(new_state)    
-    return node.children[-1]
 
-def BestChild(node, coefficient):
-    bestscore=0
-    bestchildren=[]
-    for c in node.children:
-        exploit=c.reward/c.visits
-        #d'après le papier on enleve le 2*log
-        explore=math.sqrt(math.log(node.visits)/float(c.visits))
-        score=exploit+coefficient*explore
-        if score == bestscore:
-            bestchildren.append(c)
-        if score>bestscore:
-            bestchildren=[c]
-            bestscore=score
-    if len(bestchildren)==0:
-        return "Error"
-    return random.choice(bestchildren)
 
-def DefaultPolicy(state):
-    while not state.terminal():
-        state=state.next_random_state()
-    return state.reward()
-
-def Backup(node,reward):
-    while node!=None:
-        node.update(reward)
-        node=node.parent

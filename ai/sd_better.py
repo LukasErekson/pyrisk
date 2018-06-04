@@ -2,7 +2,6 @@ from ai import AI
 import random
 import math
 import collections
-from ai.mcts_tree import MCTSState, UCTSearch
 from copy import deepcopy
 
 class SD_BetterAI(AI):
@@ -29,9 +28,10 @@ class SD_BetterAI(AI):
 
     def initial_placement(self, empty, remaining):
         if empty:
-            action = UCTSearch(MCTSState(self.player,deepcopy(list(self.world.territories.values())),self.previous_action))
-            self.previous_action = action
-            return action[-1]
+            #action = UCTSearch(MCTSState(self.player,deepcopy(list(self.world.territories.values())),self.previous_action))
+            #self.previous_action = action
+            #return action[-1]
+            return random.choice(empty)
         else:
             t = random.choice(list(self.player.territories))
             return t
