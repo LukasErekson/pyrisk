@@ -44,7 +44,7 @@ class MCTS(object):
         best_score = 0
         best_children = []
         for c in node.children:
-            exploit = c.value / c.visits
+            exploit = c.value[node.state.play_order] / c.visits
             explore = math.sqrt(math.log(node.visits) / float(c.visits))
             score = exploit + coefficient * explore
             if score == best_score:
@@ -61,6 +61,7 @@ class MCTS(object):
             node = node.parent
 
     def UpdateRoot(self, state):
+        # ?
         for player in chain(islice(state.players.values(), state.play_order + 1, None, 1),
                             islice(state.players.values(), 0, state.play_order, 1)):
             if self.root_node is None:

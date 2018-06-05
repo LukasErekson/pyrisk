@@ -77,9 +77,9 @@ class MCTSState(object):
         for player in self.players.values():
             player_rewards[player.name] = player_scores[player.name] / sum(player_scores.values())
         self.all_values = player_rewards
-        #useful ?
         self.value = player_rewards[self.player.name]
-        return self.value
+        # .values() ?
+        return self.all_values.values()
 
     def terminal(self):
         if len(self.empty) == 0:

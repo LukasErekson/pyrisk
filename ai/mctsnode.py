@@ -3,7 +3,7 @@
 class MCTSNode(object):
     def __init__(self, state, parent=None):
         self.visits = 0
-        self.value = 0.0
+        self.value = [0,0,0]
         self.state = state
         self.children = []
         self.parent = parent
@@ -13,7 +13,7 @@ class MCTSNode(object):
         self.children.append(child)
 
     def update(self, reward):
-        self.value += reward
+        self.value = list([x+y for x, y in zip(self.value, reward)])
         self.visits += 1
 
     def fully_expanded(self):
