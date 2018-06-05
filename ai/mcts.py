@@ -16,7 +16,7 @@ class MCTS(object):
     def UCTSearch(self, state0):
         self.UpdateRoot(state0)
         node0 = MCTSNode(state0)
-        for i in range(3000):
+        for i in range(MCTS.NUM_SIMULATIONS):
             node1 = self.TreePolicy(node0)
             reward = self.DefaultPolicy(node1.state)
             self.Backup(node1, reward)
