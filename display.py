@@ -14,13 +14,13 @@ class Display(object):
     def update(self, msg, player=None, territory=None):
         pass
 
+import curses
 class CursesDisplay(Display):
     EMPTY = ord(' ')
     UNCLAIMED = ord(':')
     ix = 80
     iy = 20
     def __init__(self, screen, game, cmap, ckey, color, wait):
-        import curses
         self.screen = screen
         self.game = game
         self.t_coords = collections.defaultdict(list)

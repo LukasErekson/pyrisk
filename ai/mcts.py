@@ -7,7 +7,7 @@ from ai.mctsstate import MCTSState
 
 
 class MCTS(object):
-    CONSTANT = 0.01
+    CONSTANT = 0.25
     NUM_SIMULATIONS = 3000
 
     def __init__(self):
