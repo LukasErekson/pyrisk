@@ -15,7 +15,7 @@ class MCTS(object):
 
     def UCTSearch(self, state0):
         self.UpdateRoot(state0)
-        node0 = MCTSNode(state0)
+        node0 = self.root_node
         for i in range(MCTS.NUM_SIMULATIONS):
             node1 = self.TreePolicy(node0)
             reward = self.DefaultPolicy(node1.state)
@@ -61,14 +61,13 @@ class MCTS(object):
             node = node.parent
 
     def UpdateRoot(self, state):
-        # ?
         for player in chain(islice(state.players.values(), state.play_order + 1, None, 1),
                             islice(state.players.values(), 0, state.play_order, 1)):
             if self.root_node is None:
                 self.root_node = MCTSNode(state, None)
             else:
                 for c in self.root_node.children:
-                    if c.state == state:
+                    if c.state.territories == state.territories:
                         self.root_node = c
                         break
 
