@@ -1,10 +1,10 @@
 #!/bin/python3
 
+import math
 import random
 from itertools import islice
 from world import AREAS
 import hashlib
-
 
 def define_neighbours(world):
     for te in list(world.territories.values()):
@@ -19,6 +19,7 @@ class MCTSState(object):
                    "North America": [3.11, 0.98, 0, 2.17, 7.15, 19.35, 24.82, 24.10, 36.15, 48.20],
                    "Europe": [42.33, 45.11, 43.11, 43.77, 41.35, 50.77, 43.85, 36.93],
                    "Asia": [27.10, 23.90, 23.61, 23.10, 23.61, 23.68, 19.32, 15.63, 17.43, 13.84, 10.25, 6.66, 3.07]}
+        
     UNIQUE_ENEMY_WEIGHT = -0.07
     PAIR_FRIENDLY_WEIGHT = 0.96
 
@@ -47,6 +48,10 @@ class MCTSState(object):
         terri[action] = self.player.name
         return MCTSState(self.players[self.player.ai.game.turn_order[(self.play_order+1)%len(self.players)]], terri, action)
 
+    def softmax(self,vector):
+        total = sum([math.exp(x) for x in vector])
+        return list([math.exp(x)/total for x in vector])
+    
     def values(self):
         player_scores = {}
         for player in self.players.values():
@@ -69,7 +74,6 @@ class MCTSState(object):
             # just for 3 players
             if self.play_order == 0:
                 score = score + 13.38
-
             elif self.play_order == 1:
                 score = score + 5.35
             player_scores[player.name] = max(score, 0)

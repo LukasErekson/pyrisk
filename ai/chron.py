@@ -337,7 +337,7 @@ class ChronAI(AI):
         if wanted > available:
             self.loginfo("reinforce: unable to meet defense requirement (%s/%s)", wanted, available)
             for i in range(wanted - available):
-                key = random.choice(result.keys())
+                key = random.choice(list(result.keys()))
                 result[key] -= 1
                 if result[key] == 0:
                     del result[key]

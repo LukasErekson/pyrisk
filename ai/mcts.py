@@ -7,7 +7,7 @@ from ai.mctsstate import MCTSState
 
 
 class MCTS(object):
-    CONSTANT = 0.25
+    CONSTANT = 0.01
     NUM_SIMULATIONS = 3000
 
     def __init__(self):
@@ -20,7 +20,6 @@ class MCTS(object):
             node1 = self.TreePolicy(node0)
             reward = self.DefaultPolicy(node1.state)
             self.Backup(node1, reward)
-            # à revoir ce qu'on renvoie
         x = self.BestChild(node0, 0).state.action
         return x
 
@@ -44,7 +43,8 @@ class MCTS(object):
         best_score = 0
         best_children = []
         for c in node.children:
-            exploit = c.value[node.state.play_order] / c.visits
+            # faire -1
+            exploit = c.value[node.state.play_order-1 if node.state.play_order>0 else len(node.state.players)-1] / c.visits
             explore = math.sqrt(math.log(node.visits) / float(c.visits))
             score = exploit + coefficient * explore
             if score == best_score:
