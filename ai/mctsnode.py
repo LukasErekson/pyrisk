@@ -22,5 +22,5 @@ class MCTSNode(object):
         return False
 
     def __repr__(self):
-        s = "Node; children %d; visits %d; reward %d" % (len(self.children), self.visits, self.reward)
+        s = "Node; children %d; visits %d; value %s" % (len(self.children), self.visits, str(self.value))
         return s
