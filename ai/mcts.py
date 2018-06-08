@@ -61,15 +61,17 @@ class MCTS(object):
             node = node.parent
 
     def UpdateRoot(self, state):
-        for player in chain(islice(state.players.values(), state.play_order + 1, None, 1),
-                            islice(state.players.values(), 0, state.play_order, 1)):
-            if self.root_node is None:
-                self.root_node = MCTSNode(state, None)
-            else:
-                for c in self.root_node.children:
-                    if c.state.territories == state.territories:
-                        self.root_node = c
-                        break
+        if self.root_node is None:
+            self.root_node = MCTSNode(state, None)
+            return
+        else:
+            for c in self.root_node.children:
+                for c2 in c.children:
+                    for c3 in c2.children:
+                        if c3.state.territories == state.territories:
+                            self.root_node = c3
+                            return
+        self.root_node = MCTSNode(state, None)
 
     def DefaultPolicy(self, state):
         while not state.terminal():

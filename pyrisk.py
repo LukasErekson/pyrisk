@@ -5,7 +5,6 @@ import random
 import importlib
 import re
 import collections
-import curses
 from game import Game
 
 from world import CONNECT, MAP, KEY, AREAS
@@ -69,6 +68,7 @@ def wrapper(stdscr, **kwargs):
         
 if args.games == 1:
     if args.curses:
+        import curses
         curses.wrapper(wrapper, **kwargs)
     else:
         wrapper(None, **kwargs)
@@ -78,6 +78,7 @@ else:
         kwargs['round'] = (j+1, args.games)
         kwargs['history'] = wins
         if args.curses:
+            import curses
             victor = curses.wrapper(wrapper, **kwargs)
         else:
             victor = wrapper(None, **kwargs)
