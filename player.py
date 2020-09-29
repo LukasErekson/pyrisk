@@ -1,4 +1,5 @@
 from copy import deepcopy
+from territory import Territory
 
 class Player(object):
     def __init__(self, name, game, ai_class, ai_kwargs):
@@ -13,6 +14,7 @@ class Player(object):
         for t in self.world.territories.values():
             if t.owner == self:
                 yield t
+
 
     @property
     def territory_count(self):

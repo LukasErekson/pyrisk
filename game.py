@@ -7,6 +7,8 @@ LOG = logging.getLogger("pyrisk")
 import random
 
 
+MAX_ROUNDS = 120
+
 
 class Game(object):
     """
@@ -36,6 +38,7 @@ class Game(object):
         self.players = {}
 
         self.turn = 0
+        self.round = 0
         self.turn_order = []
 
         if self.options['curses']:
@@ -73,7 +76,7 @@ class Game(object):
         
         self.display.update(msg, territory=territory, player=player)
         
-        LOG.info([str(m) for m in msg])
+        LOG.info([self.round, self.turn] + [str(m) for m in msg])
         for p in self.players.values():
             p.ai.event(msg)
         
@@ -85,11 +88,14 @@ class Game(object):
             self.players[name].color = i + 1
             self.players[name].ord = ord('\/-|+*'[i])
             self.players[name].ai.start()
+        self.event(('players', [p for p in self.players.values()]))
         self.event(("start", ))
         live_players = len(self.players)
         self.initial_placement()
+        self.round += 1
         
-        while live_players > 1:
+        # While players are alive or there are fewer than 100 rounds of play
+        while live_players > 1 and self.round < MAX_ROUNDS + 1:
             if self.player.alive:
                 choices = self.player.ai.reinforce(self.player.reinforcements)
                 assert sum(choices.values()) == self.player.reinforcements
@@ -131,6 +137,8 @@ class Game(object):
                     victory = self.combat(st, tt, attack, move)
                     final_forces = (st.forces, tt.forces)
                     self.event(("conquer" if victory else "defeat", self.player, opponent, st, tt, initial_forces, final_forces), territory=[st, tt], player=[self.player.name, tt.owner.name])
+                    if victory and opponent.territory_count == 0:
+                        self.event(("elimination", self.player, opponent))
                 freemove = self.player.ai.freemove()
                 if freemove:
                     src, target, count = freemove
@@ -158,12 +166,17 @@ class Game(object):
                         tt.forces += count
                         self.event(("move", self.player, st, tt, count), territory=[st, tt], player=[self.player.name])
                 live_players = len([p for p in self.players.values() if p.alive])
-            self.turn += 1
+            self.increment_turn()
+            self.round += 1 if not self.turn % live_players else 0
         winner = [p for p in self.players.values() if p.alive][0]
-        self.event(("victory", winner), player=[self.player.name])
         for p in self.players.values():
             p.ai.end()
-        return winner.name
+        if self.round > MAX_ROUNDS:
+            self.event(("Stalemate", "Over {} Rounds of play".format(MAX_ROUNDS)))
+            return "Stalemate"
+        else:
+            self.event(("victory", winner), player=[self.player.name])
+            return winner.name
 
     def combat(self, src, target, f_atk, f_move):
         n_atk = src.forces
@@ -218,25 +231,25 @@ class Game(object):
                 remaining[self.player.name] -= 1
                 t.owner = self.player
                 self.event(("deal", self.player, t), territory=[t], player=[self.player.name])
-                self.turn += 1
+                self.increment_turn()
         else:
             while empty:
                 choice = self.player.ai.initial_placement(empty, remaining[self.player.name])
                 t = self.world.territory(choice)
                 if t is None:
                     self.aiwarn("invalid territory choice %s", choice)
-                    self.turn += 1
+                    self.increment_turn()
                     continue
                 if t not in empty:
                     self.aiwarn("initial invalid empty territory %s", t.name)
-                    self.turn += 1
+                    self.increment_turn()
                     continue
                 t.forces += 1
                 t.owner = self.player
                 remaining[self.player.name] -= 1
                 empty.remove(t)
                 self.event(("claim", self.player, t), territory=[t], player=[self.player.name])
-                self.turn += 1
+                self.increment_turn()
         
         while sum(remaining.values()) > 0:
             if remaining[self.player.name] > 0:
@@ -244,14 +257,21 @@ class Game(object):
                 t = self.world.territory(choice)
                 if t is None:
                     self.aiwarn("initial invalid territory %s", choice)
-                    self.turn += 1
+                    self.increment_turn()
                     continue
                 if t.owner != self.player:
                     self.aiwarn("initial unowned territory %s", t.name)
-                    self.turn += 1
+                    self.increment_turn()
                     continue
                 t.forces += 1
                 remaining[self.player.name] -= 1
                 self.event(("reinforce", self.player, t, 1), territory=[t], player=[self.player.name])
-                self.turn += 1
+                self.increment_turn()
 
+    def increment_turn(self):
+        """Increment the turn by 1 and print the state of the board."""
+        
+        for p in self.players.values():
+            self.event(("State of the Board", p, {t.name: t.forces for t in p.territories}))
+
+        self.turn += 1

@@ -76,6 +76,14 @@ class CursesDisplay(Display):
         elif msg[0] == 'deal':
             _, player, t = msg
             return "%s dealt %s" % (player.name, t.name)
+        elif msg[0] == 'elimination':
+            return '%s has eliminated %s' %(msg[1].name, msg[2].name)
+        elif msg[0] == 'Stalemate':
+            return "Stalemate. Too many rounds of play."
+        elif msg[0] == 'State of the Board':
+            return 'State of the Board'
+        elif msg[0] == 'players':
+            return 'Players' + str(msg[1])
         else:
             raise
             
