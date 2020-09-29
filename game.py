@@ -273,5 +273,8 @@ class Game(object):
         
         for p in self.players.values():
             self.event(("State of the Board", p, {t.name: t.forces for t in p.territories}))
+        
+        for p in self.players.values():
+            self.event(('Player Areas', p, [a.name for a in p.areas]))
 
         self.turn += 1

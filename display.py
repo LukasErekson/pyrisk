@@ -84,6 +84,8 @@ class CursesDisplay(Display):
             return 'State of the Board'
         elif msg[0] == 'players':
             return 'Players' + str(msg[1])
+        elif msg[0] == 'Player Areas':
+            return msg[0]
         else:
             raise
             
