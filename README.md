@@ -1,7 +1,7 @@
 pyrisk
 ======
 
-Intro
+Intro 
 -----
 
 A simple implementation of a variant of the **Risk** board game for python, designed for playing with AIs.
