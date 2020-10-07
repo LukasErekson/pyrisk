@@ -145,3 +145,18 @@ class World(object):
                     avail.remove(c.ord)
             assert avail
             t.ord = avail.pop()
+
+    def __str__(self):
+        s = ""
+        for area in self.areas.values():
+            s += "{} ; {} \n".format(area, area.owner)
+
+        for territory in self.territories.values():
+            s += "{} ; {} ; {} \n".format(territory, territory.owner, territory.forces)
+
+        return s
+
+    def trun_info(self, turn):
+        """Updates the information stored in the World object for a
+        specific turn.
+        """

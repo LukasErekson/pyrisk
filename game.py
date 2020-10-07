@@ -92,11 +92,12 @@ class Game(object):
         self.event(("start", ))
         live_players = len(self.players)
         self.initial_placement()
-        self.round += 1
+        self.increment_round()
         
         # While players are alive or there are fewer than 100 rounds of play
         while live_players > 1 and self.round < MAX_ROUNDS + 1:
             if self.player.alive:
+                self.player.max_draft_count = max(self.player.max_draft_count, self.player.reinforcements)
                 choices = self.player.ai.reinforce(self.player.reinforcements)
                 assert sum(choices.values()) == self.player.reinforcements
                 for tt, ff in choices.items():
@@ -135,6 +136,7 @@ class Game(object):
                     initial_forces = (st.forces, tt.forces)
                     opponent = tt.owner
                     victory = self.combat(st, tt, attack, move)
+                    self.player.turn_attack_count += 1
                     final_forces = (st.forces, tt.forces)
                     self.event(("conquer" if victory else "defeat", self.player, opponent, st, tt, initial_forces, final_forces), territory=[st, tt], player=[self.player.name, tt.owner.name])
                     if victory and opponent.territory_count == 0:
@@ -166,17 +168,20 @@ class Game(object):
                         tt.forces += count
                         self.event(("move", self.player, st, tt, count), territory=[st, tt], player=[self.player.name])
                 live_players = len([p for p in self.players.values() if p.alive])
-            self.increment_turn()
-            self.round += 1 if not self.turn % live_players else 0
+            self.increment_turn(self.player)
+            if not self.turn % live_players:
+                self.increment_round()
         winner = [p for p in self.players.values() if p.alive][0]
         for p in self.players.values():
             p.ai.end()
+            self.event(('max draft counts', p, p.max_draft_count))
         if self.round > MAX_ROUNDS:
             self.event(("Stalemate", "Over {} Rounds of play".format(MAX_ROUNDS)))
             return "Stalemate"
         else:
             self.event(("victory", winner), player=[self.player.name])
             return winner.name
+        
 
     def combat(self, src, target, f_atk, f_move):
         n_atk = src.forces
@@ -196,8 +201,10 @@ class Game(object):
             for a, d in zip(atk_roll, def_roll):
                 if a > d:
                     n_def -= 1
+                    src.owner.total_troops_conquered += 1
                 else:
                     n_atk -= 1
+                    target.owner.total_troops_conquered += 1
         
         if n_def == 0:
             move = f_move(n_atk)
@@ -268,13 +275,37 @@ class Game(object):
                 self.event(("reinforce", self.player, t, 1), territory=[t], player=[self.player.name])
                 self.increment_turn()
 
-    def increment_turn(self):
-        """Increment the turn by 1 and print the state of the board."""
+    def increment_turn(self, player=None):
+        """Increment the turn by 1 and print the state of the board.
+        
+        Parameters
+        ----------
+            player (Player) : The player to count how many times they
+            attacked in this round.
+        """
         
         for p in self.players.values():
-            self.event(("State of the Board", p, {t.name: t.forces for t in p.territories}))
+            if p.alive:
+                self.event(("State of the Board", p, {t.name: t.forces for t in p.territories}))
         
         for p in self.players.values():
-            self.event(('Player Areas', p, [a.name for a in p.areas]))
+            if p.alive:
+                self.event(('Player Areas', p, [a.name for a in p.areas]))
 
+        if player is not None:
+            self.event(('total player attacks this turn', player, player.turn_attack_count))
+            player.turn_attack_count = 0
         self.turn += 1
+
+    def increment_round(self):
+        """Increment the round by 1 and print various attributes about
+        area control.
+        """
+
+        self.round += 1
+        
+        for p in self.players.values():
+            if p.alive:
+                for a in p.areas:
+                    p.area_control_counts[a] += 1
+                self.event(('player area control counters', p, [(a.name, p.area_control_counts[a]) for a in p.world.areas.values()]))

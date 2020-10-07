@@ -87,7 +87,7 @@ class CursesDisplay(Display):
         elif msg[0] == 'Player Areas':
             return msg[0]
         else:
-            raise
+            return ""  # Empty string for display
             
     def update(self, msg, territory=None, player=None, extra=None, modal=False):
         if not territory:
