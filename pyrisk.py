@@ -34,13 +34,19 @@ def execute_in_parallel(args, **kwargs):
         print("Starting process {} with {} games".format(i+1,games))
         p.start()
         process_list.append(p)
-    for p in process_list:
+    for i, p in enumerate(process_list):
         p.join()
+        print("Joined process {}".format(i+1))
         
-def configure_logger(logger, base_filename, pid):
-    formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
+def configure_logger(logger, base_filename, pid, game=None):
+    #formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
+    formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
+    while logger.hasHandlers():
+        logger.handlers.pop()
     if (base_filename):
         logfile = "logs/{}{}.log".format(base_filename, pid)
+        if game is not None:
+            logfile = "logs/{}{}.game{}.log".format(base_filename, pid, game)
         file_handler = logging.FileHandler(logfile, mode='w')
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -49,11 +55,11 @@ def configure_logger(logger, base_filename, pid):
 def launch_in_process(pid, games, args, **kwargs):
     #use different loggers for each process
     logger = logging.getLogger("pyrisk{}".format(pid))
-    configure_logger(logger, args.log, pid)
     kwargs['logger'] = logger
     
     wins = collections.defaultdict(int)
     for j in range(games):
+        configure_logger(logger, args.log, pid,game=j+1)
         kwargs['round'] = (j+1, args.games)
         kwargs['history'] = wins
         if args.curses:
@@ -63,10 +69,13 @@ def launch_in_process(pid, games, args, **kwargs):
             victor = wrapper(None, **kwargs)
         wins[victor] += 1
     #TODO: make below safe for multiprocessing
-    print("Outcome of %s games" % games)
+    print("Process {}: Outcome of {} games".format(pid, games))
     player_classes = kwargs['player_classes']
     for k in sorted(wins, key=lambda x: wins[x]):
-        print("%s [%s]:\t%s" % (k, player_classes[NAMES.index(k)].__name__, wins[k]))
+        if k == "Stalemate":
+            print("%s [%s]:\t%s" % (k, "None", wins[k]))
+        else:
+            print("%s [%s]:\t%s" % (k, player_classes[NAMES.index(k)].__name__, wins[k]))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
