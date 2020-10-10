@@ -21,7 +21,6 @@ def wrapper(stdscr, **kwargs):
     return g.play()
 
 def execute_in_parallel(args, **kwargs):
-    args.curses = False
     process_list = []
     avg_games = args.games // args.processes
     remaining_games = args.games % args.processes
@@ -126,7 +125,9 @@ if __name__ == "__main__":
             except:
                 print("Unable to import AI %s from ai/%s.py" % (name, package))
                 raise
-
+    
+    if args.processes > 1:
+        args.curses = False
     kwargs = dict(curses=args.curses, color=args.color, delay=args.delay, connect=CONNECT, cmap=MAP,
                   ckey=KEY, areas=AREAS, wait=args.wait, deal=args.deal, player_classes=player_classes)
                   
