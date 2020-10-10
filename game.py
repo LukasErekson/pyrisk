@@ -81,7 +81,7 @@ class Game(object):
             p.ai.event(msg)
         
     def play(self):
-        assert 2 <= len(self.players) <= 5
+        assert 2 <= len(self.players) <= 6
         self.turn_order = list(self.players)
         random.shuffle(self.turn_order)
         for i, name in enumerate(self.turn_order):
