@@ -1,6 +1,5 @@
 from copy import deepcopy
 import logging
-LOG = logging.getLogger("pyrisk")
 
 class Territory(object):
     def __init__(self, name, area):
@@ -96,12 +95,13 @@ class Area(object):
 
 class World(object):
     ords = list(map(ord, r'\/|-+'))
-    def __init__(self):
+    def __init__(self, logger):
         self.territories = {}
         self.areas = {}
+        self.logger = logger
 
     def __deepcopy__(self,memo):
-        newobj = World()
+        newobj = World(self.logger)
         newobj.__dict__.update(deepcopy(self.__dict__,memo))
         return newobj
 
@@ -123,11 +123,11 @@ class World(object):
 
     def load(self, areas, connections):
         for name, (value, territories) in areas.items():
-            LOG.debug("Creating area=%s", name)
+            self.logger.debug("Creating area=%s", name)
             area = Area(name, value)
             self.areas[name] = area
             for t in territories:
-                LOG.debug("Creating territory=%s", t)
+                self.logger.debug("Creating territory=%s", t)
                 territory = Territory(t, area)
                 area.territories.add(territory)
                 self.territories[t] = territory

@@ -3,12 +3,9 @@ from player import Player
 from territory import World
 from world import CONNECT, AREAS, MAP, KEY
 import logging
-LOG = logging.getLogger("pyrisk")
 import random
 
-
 MAX_ROUNDS = 120
-
 
 class Game(object):
     """
@@ -31,8 +28,9 @@ class Game(object):
     def __init__(self, **options):
         self.options = self.defaults.copy()
         self.options.update(options)
+        self.logger = options['logger']
 
-        self.world = World()
+        self.world = World(self.logger)
         self.world.load(self.options['areas'], self.options['connect'])
 
         self.players = {}
@@ -61,7 +59,8 @@ class Game(object):
 
     def aiwarn(self, *args):
         """Generate a warning message when an AI player tries to break the rules."""
-        logging.getLogger("pyrisk.player.%s" % self.player.ai.__class__.__name__).warn(*args)
+        #TODO: process safe access
+        #logging.getLogger("pyrisk.player.%s" % self.player.ai.__class__.__name__).warn(*args)
 
     def event(self, msg, territory=None, player=None):
         """
@@ -76,7 +75,7 @@ class Game(object):
         
         self.display.update(msg, territory=territory, player=player)
         
-        LOG.info([self.round, self.turn] + [str(m) for m in msg])
+        self.logger.info([self.round, self.turn] + [str(m) for m in msg])
         for p in self.players.values():
             p.ai.event(msg)
         
