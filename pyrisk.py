@@ -40,8 +40,8 @@ def execute_in_parallel(args, **kwargs):
 def configure_logger(logger, base_filename, pid, game=None):
     #formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
     formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
-    while logger.hasHandlers():
-        logger.handlers.pop()
+    # while logger.hasHandlers():
+        # logger.handlers.pop()
     if (base_filename):
         logfile = "logs/{}{}.log".format(base_filename, pid)
         if game is not None:
@@ -52,13 +52,13 @@ def configure_logger(logger, base_filename, pid, game=None):
     logger.setLevel(logging.DEBUG)
    
 def launch_in_process(pid, games, args, **kwargs):
-    #use different loggers for each process
-    logger = logging.getLogger("pyrisk{}".format(pid))
-    kwargs['logger'] = logger
     
     wins = collections.defaultdict(int)
     for j in range(games):
-        configure_logger(logger, args.log, pid,game=j+1)
+        # Use different loggers for each process and agme
+        logger = logging.getLogger("pyrisk{}_{}".format(pid, j))
+        kwargs['logger'] = logger
+        configure_logger(logger, args.log, pid, game=j+1)
         kwargs['round'] = (j+1, args.games)
         kwargs['history'] = wins
         if args.curses:
@@ -67,6 +67,9 @@ def launch_in_process(pid, games, args, **kwargs):
         else:
             victor = wrapper(None, **kwargs)
         wins[victor] += 1
+
+        # Delete the logger objects to save resources.
+        del logger
     #TODO: make below safe for multiprocessing
     print("Process {}: Outcome of {} games".format(pid, games))
     player_classes = kwargs['player_classes']
