@@ -69,6 +69,7 @@ def launch_in_process(pid, games, args, **kwargs):
         wins[victor] += 1
 
         # Delete the logger objects to save resources.
+        logger.handlers[0].close()
         del logger
     #TODO: make below safe for multiprocessing
     print("Process {}: Outcome of {} games".format(pid, games))

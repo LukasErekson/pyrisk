@@ -123,11 +123,11 @@ class World(object):
 
     def load(self, areas, connections):
         for name, (value, territories) in areas.items():
-            self.logger.debug("Creating area=%s", name)
+            # self.logger.debug("Creating area=%s", name)
             area = Area(name, value)
             self.areas[name] = area
             for t in territories:
-                self.logger.debug("Creating territory=%s", t)
+                # self.logger.debug("Creating territory=%s", t)
                 territory = Territory(t, area)
                 area.territories.add(territory)
                 self.territories[t] = territory
