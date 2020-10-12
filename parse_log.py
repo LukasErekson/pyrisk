@@ -17,7 +17,6 @@ import re
 import sys
 import os
 
-
 if __name__ == "__main__":
     # Take in an argument for the file name and ouput file. If none is
     # specified, use the defaults.
