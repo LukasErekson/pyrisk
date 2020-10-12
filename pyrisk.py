@@ -102,7 +102,8 @@ if __name__ == "__main__":
 
     if args.log:
         #Note: each process has its own logger so this one isn't used
-        logging.basicConfig(filename='logs/{}_other.log', filemode='w')
+        # logging.basicConfig(filename='logs/{}_other.log', filemode='w')
+        pass
     elif not args.curses:
         logging.basicConfig()
 
