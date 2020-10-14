@@ -9,9 +9,9 @@ class Player(object):
         self.ai = ai_class(self, game, game.world, **ai_kwargs)
         self.world = game.world
         self.area_control_counts = {a: 0 for a in self.world.areas.values()}
-        self.max_draft_count = 0
-        self.turn_attack_count = 0
-        self.total_troops_conquered = 0
+        self.max_draft_count = 0  # Measure the maximum draft count of the game
+        self.turn_attack_count = 0  # How many attack actions were taken per turn
+        self.total_troops_conquered = 0  # How many troops this player defeated
 
     @property
     def territories(self):
