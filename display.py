@@ -1,6 +1,5 @@
 import collections
 import logging
-LOG = logging.getLogger("pyrisk")
 import time
 
 class LogQueue(logging.Handler):
@@ -27,8 +26,9 @@ class CursesDisplay(Display):
         self.t_centre = {}
         self.color = color
         self.wait = wait
+        self.logger = game.logger
         self.logqueue = LogQueue()
-        LOG.addHandler(self.logqueue)
+        self.logger.addHandler(self.logqueue)
 
         self.wx = 0
         self.wy = 0
