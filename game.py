@@ -236,8 +236,8 @@ class Game(object):
                 t.forces += 1
                 remaining[self.player.name] -= 1
                 t.owner = self.player
-                # self.event(("deal", self.player, t), territory=[t], player=[self.player.name])
-                # self.increment_turn()
+                self.event(("deal", self.player, t), territory=[t], player=[self.player.name])
+                self.increment_turn()
         else:
             while empty:
                 choice = self.player.ai.initial_placement(empty, remaining[self.player.name])
