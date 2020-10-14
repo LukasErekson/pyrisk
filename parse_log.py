@@ -11,47 +11,47 @@ file and create the data types and files we want for each game.
 
 # Index of territories to their integer index
 T_INDEX = {'Alaska': 0,
-        'Northwest Territories': 1,
-        'Greenland': 2,
-        'Alberta': 3,
-        'Ontario': 4,
-        'Quebec': 5,
-        'Western United States': 6,
-        'Eastern United States': 7,
-        'Mexico': 8,
-        'Venezuala': 9,
-        'Peru': 10,
-        'Argentina': 11,
-        'Brazil': 12,
-        'Iceland': 13,
-        'Great Britain': 14,
-        'Scandanavia': 15,
-        'Western Europe': 16,
-        'Northern Europe': 17,
-        'Southern Europe': 18,
-        'Ukraine': 19,
-        'North Africa': 20,
-        'Egypt': 21,
-        'East Africa': 22,
-        'Congo': 23,
-        'South Africa': 24,
-        'Madagascar': 25,
-        'Middle East': 26,
-        'Ural': 27,
-        'Siberia': 28,
-        'Yakutsk': 29,
-        'Irkutsk': 30,
-        'Kamchatka': 31,
-        'Afghanistan': 32,
-        'Mongolia': 33,
-        'China': 34,
-        'Japan': 35,
-        'India': 36,
-        'South East Asia': 37,
-        'Indonesia': 38,
-        'New Guinea': 39,
-        'Western Australia': 40,
-        'Eastern Australia': 41}
+           'Northwest Territories': 1,
+           'Greenland': 2,
+           'Alberta': 3,
+           'Ontario': 4,
+           'Quebec': 5,
+           'Western United States': 6,
+           'Eastern United States': 7,
+           'Mexico': 8,
+           'Venezuala': 9,
+           'Peru': 10,
+           'Argentina': 11,
+           'Brazil': 12,
+           'Iceland': 13,
+           'Great Britain': 14,
+           'Scandanavia': 15,
+           'Western Europe': 16,
+           'Northern Europe': 17,
+           'Southern Europe': 18,
+           'Ukraine': 19,
+           'North Africa': 20,
+           'Egypt': 21,
+           'East Africa': 22,
+           'Congo': 23,
+           'South Africa': 24,
+           'Madagascar': 25,
+           'Middle East': 26,
+           'Ural': 27,
+           'Siberia': 28,
+           'Yakutsk': 29,
+           'Irkutsk': 30,
+           'Kamchatka': 31,
+           'Afghanistan': 32,
+           'Mongolia': 33,
+           'China': 34,
+           'Japan': 35,
+           'India': 36,
+           'South East Asia': 37,
+           'Indonesia': 38,
+           'New Guinea': 39,
+           'Western Australia': 40,
+           'Eastern Australia': 41}
 
 
 if __name__ == "__main__":
@@ -131,10 +131,10 @@ if __name__ == "__main__":
                 Unit_lists[T_INDEX[territory], player_index[player], turn] = int(troop_count)
 
         # TODO : Save all the formats that we care about
-        data = {"Unit List": Unit_lists,
-                "Turns": total_turns,
-                "Winner": winner,
-                "Players": [np.string_(p) for p in p_name_list]}  # HDF5 is picky about strings
+        data = {"unit_list": Unit_lists,
+                "turns": total_turns,
+                "winner": winner,
+                "players": [np.string_(p) for p in p_name_list]}  # HDF5 is picky about strings
 
         # Save as an HDF
         hf = h5py.File(output_dir + "/" + output_file + str(k) + '.hdf', 'w')
@@ -142,4 +142,3 @@ if __name__ == "__main__":
             hf[k] = data[k]
 
         hf.close()
-
