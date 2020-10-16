@@ -127,6 +127,9 @@ if __name__ == "__main__":
         os.makedirs("logs/")
 
     if args.log:
+        if '/' in args.log:
+            if not os.path.exists("logs/"+args.log):
+                os.makedirs("logs/"+args.log)
         #Note: each process has its own logger so this one isn't used
         # logging.basicConfig(filename='logs/{}_other.log', filemode='w')
         pass
