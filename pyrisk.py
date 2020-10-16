@@ -40,8 +40,8 @@ def execute_in_parallel(args, **kwargs):
 def configure_logger(logger, base_filename, pid, game=None):
     #formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
     formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
-    # while logger.hasHandlers():
-        # logger.handlers.pop()
+    while logger.hasHandlers(): #DO NOT REMOVE, you will cause bugs
+        logger.handlers.pop().close()
     if (base_filename):
         logfile = "logs/{}{}.log".format(base_filename, pid)
         if game is not None:
@@ -68,9 +68,10 @@ def launch_in_process(pid, games, args, **kwargs):
             victor = wrapper(None, **kwargs)
         wins[victor] += 1
 
-        # Delete the logger objects to save resources.
-        logger.handlers[0].close()
-        del logger
+    # Delete the logger object to save resources.
+    while logger.hasHandlers():
+        logger.handlers.pop().close()
+    del logger
     #TODO: make below safe for multiprocessing
     print("Process {}: Outcome of {} games".format(pid, games))
     player_classes = kwargs['player_classes']
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         # logging.basicConfig(filename='logs/{}_other.log', filemode='w')
         pass
     elif not args.curses:
-        logging.basicConfig()
+        logging.basicConfig(level=logging.DEBUG)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -137,6 +138,10 @@ if __name__ == "__main__":
                   ckey=KEY, areas=AREAS, wait=args.wait, deal=args.deal, player_classes=player_classes)
                   
     if args.games == 1:
+        logger = logging.getLogger('pyrisk')
+        kwargs['logger'] = logger
+        if args.log:
+            configure_logger(logger, args.log, 0, game=0)
         if args.curses:
             import curses
             curses.wrapper(wrapper, **kwargs)
