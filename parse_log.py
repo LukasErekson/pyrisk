@@ -145,11 +145,15 @@ if __name__ == "__main__":
         # Create and populate the dataframe
         unit_df = pd.DataFrame(df_Unit_list)
         unit_df.columns = header
-        unit_df['winner'] = winner
+        if winner is 'None':
+            unit_df['winner'] = np.nan
+        else:
+            unit_df['winner'] = player_index[winner]
 
+        # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
 
-        # Dictionary of other data that we may care about (othe features)
+        # Dictionary of other data that we may care about (other features)
         data = {"players": [(np.string_(p), player_index[p]) for p in p_name_list]}  # HDF5 is picky about strings
 
         # Save as an HDF
