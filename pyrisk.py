@@ -50,7 +50,7 @@ def execute_in_parallel(args, **kwargs):
         print("Joined process {}".format(i))
         
     #Print and log win summary statistics
-    print("\nTotal outcome of {} games".format(games))
+    print("\nTotal outcome of {} games".format(args.games))
     player_classes = kwargs['player_classes']
     for k in sorted(wins, key=lambda x: wins[x]):
         if k == "Stalemate":
