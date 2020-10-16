@@ -8,7 +8,7 @@ import collections
 from game import Game
 
 from world import CONNECT, MAP, KEY, AREAS
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 import argparse
 
@@ -24,24 +24,56 @@ def execute_in_parallel(args, **kwargs):
     process_list = []
     avg_games = args.games // args.processes
     remaining_games = args.games % args.processes
+    queue = Queue()
     for i in range(args.processes):
         games = avg_games
         if remaining_games > 0:
             remaining_games -= 1
             games += 1
-        p = Process(target=launch_in_process, args=(i, games, args,), kwargs=kwargs)
+        p = Process(target=launch_in_process, args=(i, games, queue, args,), kwargs=kwargs)
         print("Starting process {} with {} games".format(i+1,games))
         p.start()
         process_list.append(p)
+    #Collect win stats
+    wins = collections.defaultdict(int)
+    for p in process_list:
+        #NB: you must get all output from processes before joining otherwise the Queue will block
+        pid, pwins = queue.get()
+        print("Process {} finished".format(pid))
+        for key in pwins.keys():
+            if key in wins:
+                wins[key] += pwins[key]
+            else:
+                wins[key] = pwins[key]
     for i, p in enumerate(process_list):
         p.join()
-        print("Joined process {}".format(i+1))
+        print("Joined process {}".format(i))
+        
+    #Print and log win summary statistics
+    print("\nTotal outcome of {} games".format(args.games))
+    player_classes = kwargs['player_classes']
+    for k in sorted(wins, key=lambda x: wins[x]):
+        if k == "Stalemate":
+            print("%s [%s]:\t%s" % (k, "None", wins[k]))
+        else:
+            print("%s [%s]:\t%s" % (k, player_classes[NAMES.index(k)].__name__, wins[k]))
+    
+    if args.log:
+        summary_file = "logs/{}_win_summary.log".format(args.log)
+        with open(summary_file, 'w') as f:
+            for key in wins:
+                if key == "Stalemate":
+                    f.write("%s, %s, %s, %s\n" % (-1, key, "None", wins[key]))
+                else:
+                    index = NAMES.index(key)
+                    pclass = player_classes[index].__name__
+                    f.write("%s, %s, %s, %s\n" % (index, key, pclass, wins[key]))
         
 def configure_logger(logger, base_filename, pid, game=None):
     #formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
     formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
-    # while logger.hasHandlers():
-        # logger.handlers.pop()
+    while logger.hasHandlers(): #DO NOT REMOVE, you will cause bugs
+        logger.handlers.pop().close()
     if (base_filename):
         logfile = "logs/{}{}.log".format(base_filename, pid)
         if game is not None:
@@ -51,8 +83,7 @@ def configure_logger(logger, base_filename, pid, game=None):
         logger.addHandler(file_handler)
     logger.setLevel(logging.DEBUG)
    
-def launch_in_process(pid, games, args, **kwargs):
-    
+def launch_in_process(pid, games, queue, args, **kwargs):
     wins = collections.defaultdict(int)
     for j in range(games):
         # Use different loggers for each process and agme
@@ -68,17 +99,12 @@ def launch_in_process(pid, games, args, **kwargs):
             victor = wrapper(None, **kwargs)
         wins[victor] += 1
 
-        # Delete the logger objects to save resources.
-        logger.handlers[0].close()
-        del logger
-    #TODO: make below safe for multiprocessing
-    print("Process {}: Outcome of {} games".format(pid, games))
-    player_classes = kwargs['player_classes']
-    for k in sorted(wins, key=lambda x: wins[x]):
-        if k == "Stalemate":
-            print("%s [%s]:\t%s" % (k, "None", wins[k]))
-        else:
-            print("%s [%s]:\t%s" % (k, player_classes[NAMES.index(k)].__name__, wins[k]))
+    # Delete the logger object to save resources.
+    while logger.hasHandlers():
+        logger.handlers.pop().close()
+    del logger
+    #return output to main process
+    queue.put((pid, wins))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -101,11 +127,14 @@ if __name__ == "__main__":
         os.makedirs("logs/")
 
     if args.log:
+        if '/' in args.log:
+            if not os.path.exists("logs/"+args.log):
+                os.makedirs("logs/"+args.log)
         #Note: each process has its own logger so this one isn't used
         # logging.basicConfig(filename='logs/{}_other.log', filemode='w')
         pass
     elif not args.curses:
-        logging.basicConfig()
+        logging.basicConfig(level=logging.DEBUG)
 
     if args.seed is not None:
         random.seed(args.seed)
@@ -137,6 +166,10 @@ if __name__ == "__main__":
                   ckey=KEY, areas=AREAS, wait=args.wait, deal=args.deal, player_classes=player_classes)
                   
     if args.games == 1:
+        logger = logging.getLogger('pyrisk')
+        kwargs['logger'] = logger
+        if args.log:
+            configure_logger(logger, args.log, 0, game=0)
         if args.curses:
             import curses
             curses.wrapper(wrapper, **kwargs)
@@ -146,7 +179,7 @@ if __name__ == "__main__":
         if args.processes > 1:
             execute_in_parallel(args, **kwargs)
         else:
-            launch_in_process(0, args.games, args, **kwargs)
+            launch_in_process(0, args.games, None, args, **kwargs)
 
 
 

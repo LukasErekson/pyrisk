@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from glob import glob
 import h5py
 import re
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         p_list_str = re.findall(p_list_pattern, file)[0]
 
         # Player name pattern
-        p_name_pattern = re.compile("P;[A-Z;a-z]+")
+        p_name_pattern = re.compile("P;[A-Z;a-z;_]+")
         p_name_list = re.findall(p_name_pattern, p_list_str)
 
         # Dictionaries mapping players to indicies and vice versa
@@ -102,7 +103,7 @@ if __name__ == "__main__":
 
         # Get the winner of the game
         try:
-            winner_pattern = re.compile("([0-9]+), 'victory', '(P;[A-Z;a-z]+)'")
+            winner_pattern = re.compile("([0-9]+), 'victory', '(P;[A-Z;a-z;_]+)'")
             total_turns, winner = re.findall(winner_pattern, file)[0]
             total_turns = int(total_turns)
 
@@ -114,7 +115,7 @@ if __name__ == "__main__":
             total_turns = int(total_turns)
 
         # State of the board after each turn
-        board_state_pattern = re.compile("([0-9]+), 'State of the Board', '(P;[A-Z;a-z]+)', (\"|\')({.*})(\"|\')")
+        board_state_pattern = re.compile("([0-9]+), 'State of the Board', '(P;[A-Z;a-z;_]+)', (\"|\')({.*})(\"|\')")
         states = re.findall(board_state_pattern, file)
 
         # Initialize empty unit list arrays
@@ -130,14 +131,33 @@ if __name__ == "__main__":
             for territory, troop_count in forces:
                 Unit_lists[T_INDEX[territory], player_index[player], turn] = int(troop_count)
 
-        # TODO : Save all the formats that we care about
-        data = {"unit_list": Unit_lists,
-                "turns": total_turns,
-                "winner": winner,
-                "players": [np.string_(p) for p in p_name_list]}  # HDF5 is picky about strings
+        # Turn the Unit list into something DataFrame Friendly
+        df_Unit_list = np.zeros((total_turns, 42 * num_players))
+        for turn in range(total_turns):
+            df_Unit_list[turn, :] = Unit_lists[:, :, turn].T.reshape(42 * num_players)
+
+        # Get the headers for the dataframe
+        header = []
+        for player in p_name_list:
+            for territory in T_INDEX.keys():
+                header.append('Player ' + str(player_index[player]) + ' ' + territory)
+
+        # Create and populate the dataframe
+        unit_df = pd.DataFrame(df_Unit_list)
+        unit_df.columns = header
+        if winner is 'None':
+            unit_df['winner'] = np.nan
+        else:
+            unit_df['winner'] = player_index[winner]
+
+        # Save the dataframe to the hdf file.
+        unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
+
+        # Dictionary of other data that we may care about (other features)
+        data = {"players": [(np.string_(p), player_index[p]) for p in p_name_list]}  # HDF5 is picky about strings
 
         # Save as an HDF
-        hf = h5py.File(output_dir + "/" + output_file + str(k) + '.hdf', 'w')
+        hf = h5py.File(output_dir + "/" + output_file + str(k) + '.hdf', 'a')
         for k in data.keys():
             hf[k] = data[k]
 
