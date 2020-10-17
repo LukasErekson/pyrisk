@@ -54,6 +54,12 @@ T_INDEX = {'Alaska': 0,
            'Western Australia': 40,
            'Eastern Australia': 41}
 
+AREA_INDEX = {'North America': 0,
+              'South America': 1,
+              'Africa': 2,
+              'Europe': 3,
+              'Asia': 4,
+              'Australia': 5}
 
 if __name__ == "__main__":
     # Take in an argument for the file name and ouput file. If none is
@@ -118,6 +124,22 @@ if __name__ == "__main__":
             winner = "None"
             total_turns = int(total_turns)
 
+        # Player areas after each turn
+        player_area_pattern = re.compile("([0-9]+), 'Player Areas', '([A-Z_a-z;]+)', ['\"]\[(.*)\]['\"]\]")
+        p_areas = re.findall(player_area_pattern, file)
+
+        # Initialize empty area lists
+        Area_lists = np.zeros((6, num_players, total_turns))
+
+        # Populate the Area_lists array with correct values
+        for p_area in p_areas:
+            turn = int(p_area[0])
+            player = p_area[1]
+            players_area_list = p_area[2].replace("'", "").split(',')
+            for area in players_area_list:
+                if len(area.strip()) > 0:  # Don't include empty areas
+                    Area_lists[AREA_INDEX[area.strip()], player_index[player], turn] = 1
+
         # State of the board after each turn
         board_state_pattern = re.compile("([0-9]+), 'State of the Board', '(P;[A-Z;a-z;_]+)', (\"|\')({.*})(\"|\')")
         states = re.findall(board_state_pattern, file)
@@ -125,7 +147,6 @@ if __name__ == "__main__":
         # Initialize empty unit list arrays
         Unit_lists = np.zeros((42, num_players, total_turns))
         territory_forces = re.compile("\'([a-zA-z ]+)\': ([0-9]+)")
-
 
         # Gather the unit lists at every turn of the game.
         for state in states:
@@ -145,10 +166,19 @@ if __name__ == "__main__":
         for player in p_name_list:
             for territory in T_INDEX.keys():
                 header.append('Player ' + str(player_index[player]) + ' ' + territory)
-
+        
         # Create and populate the dataframe
         unit_df = pd.DataFrame(df_Unit_list)
         unit_df.columns = header
+
+        # Add area control columns
+        for player in p_name_list:
+            p_index = player_index[player]
+            for area in AREA_INDEX.keys():
+                col_title = 'Player ' + str(p_index) + ' ' + area
+                unit_df[col_title] = Area_lists[AREA_INDEX[area], p_index, :]
+
+        # Add winner column
         if winner is 'None':
             unit_df['winner'] = np.nan
         else:
