@@ -54,12 +54,12 @@ def execute_in_parallel(args, **kwargs):
     player_classes = kwargs['player_classes']
     for k in sorted(wins, key=lambda x: wins[x]):
         if k == "Stalemate":
-            print("%s [%s]:\t%s" % (k, "None", wins[k]))
+            print("%s [%s]:\t%s" % (float("Nan"), "None", wins[k]))
         else:
             print("%s [%s]:\t%s" % (k, player_classes[NAMES.index(k)].__name__, wins[k]))
     
     if args.log:
-        summary_file = "logs/{}_win_summary.log".format(args.log)
+        summary_file = "logs/{}_win_summary.csv".format(args.log)
         with open(summary_file, 'w') as f:
             for key in wins:
                 if key == "Stalemate":
@@ -128,8 +128,10 @@ if __name__ == "__main__":
 
     if args.log:
         if '/' in args.log:
-            if not os.path.exists("logs/"+args.log):
-                os.makedirs("logs/"+args.log)
+            splitIndex = - args.log[::-1].index('/')
+            foldername = "logs/"+args.log[:splitIndex]
+            if not os.path.exists(foldername):
+                os.makedirs(foldername)
         #Note: each process has its own logger so this one isn't used
         # logging.basicConfig(filename='logs/{}_other.log', filemode='w')
         pass

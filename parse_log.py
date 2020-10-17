@@ -80,6 +80,10 @@ if __name__ == "__main__":
     files_to_parse = glob(input_dir + '/*.log')
     for k, filename in enumerate(files_to_parse):
         
+        if "win_summary" in filename:
+            #skip win summaries because they are formatted differently
+            continue
+        
         file = ""
         with open(filename, 'r') as fi:
             file = fi.read()
