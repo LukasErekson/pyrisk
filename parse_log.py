@@ -181,8 +181,16 @@ if __name__ == "__main__":
         # Add winner column
         if winner is 'None':
             unit_df['winner'] = np.nan
+            for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
+                unit_df[place] = np.nan
         else:
             unit_df['winner'] = player_index[winner]
+            # Add Loser columns columns
+            loser_pattern = re.compile("'elimination', .*, '(P;[A-Z;a-z;_]+)'")
+            losers = re.findall(loser_pattern, file)
+            for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
+                unit_df[place] = losers[-1]
+                losers.pop()
 
         # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
