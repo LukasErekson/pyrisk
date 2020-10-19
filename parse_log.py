@@ -270,7 +270,7 @@ if __name__ == "__main__":
                 col_title = 'Player ' + str(p_index) + ' ' + area
                 unit_df[col_title] = Area_lists[AREA_INDEX[area], p_index, :]
 
-        #for each player generate some features
+        #create some features
         for i in range(num_players):
             #get the columns for the continental control for that player
             x = list_player_continents(i)
@@ -278,23 +278,30 @@ if __name__ == "__main__":
             #order = [North America,South America, Africa, Europe, Asia, Australia]
             #rewards = [5,2,3,5,7,2]
             # then matrix multiplication gives the continental rewards
-            unit_df[f'Player {i} Continental Reward'] = unit_df[x].values @ [5,2,3,5,7,2]
+            df[f'Player {i} Continental Reward'] = df[x].values @ [5,2,3,5,7,2]
 
             #get number of troops per player and country count
             # then get total troop increase per player per turn
             x = list_player_countries(player_num=i)
-            unit_df[f'Player {i} Troop Count'] = unit_df[x].sum(axis=1)
-            unit_df[f'Player {i} Country Count'] = (unit_df[x] > 0).sum(axis=1)
-            unit_df[f'Player {i} Troop Increase Due to Country Count'] = unit_df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
-            unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
+            df[f'Player {i} Troop Count'] = df[x].sum(axis=1)
+            df[f'Player {i} Country Count'] = (df[x] > 0).sum(axis=1)
+            df[f'Player {i} Troop Increase Due to Country Count'] = df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
+            df[f'Player {i} Total Reinforcements'] = df[f'Player {i} Troop Increase Due to Country Count'] + df[f'Player {i} Continental Reward']
+
 
         # Add winner column
         if winner is 'None':
             unit_df['winner'] = np.nan
+            for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
+                unit_df[place] = np.nan
         else:
             unit_df['winner'] = player_index[winner]
-
-
+            # Add Loser columns columns
+            loser_pattern = re.compile("'elimination', .*, '(P;[A-Z;a-z;_]+)'")
+            losers = re.findall(loser_pattern, file)
+            for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
+                unit_df[place] = losers[-1]
+                losers.pop()
 
         # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')

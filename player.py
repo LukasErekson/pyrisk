@@ -8,6 +8,10 @@ class Player(object):
         self.ord = 32
         self.ai = ai_class(self, game, game.world, **ai_kwargs)
         self.world = game.world
+        self.area_control_counts = {a: 0 for a in self.world.areas.values()}
+        self.max_draft_count = 0  # Measure the maximum draft count of the game
+        self.turn_attack_count = 0  # How many attack actions were taken per turn
+        self.total_troops_conquered = 0  # How many troops this player defeated
 
     @property
     def territories(self):
@@ -29,6 +33,22 @@ class Player(object):
         for a in self.world.areas.values():
             if a.owner == self:
                 yield a
+
+    @property
+    def continent_control(self, area):
+        """Returns the number of rounds which the player had control of
+        the specific area/continent.
+
+        Parameters
+        ----------
+            area (Area) : The area we're interested in finding the
+                number of rounds under this player's control of.
+        
+        Returns
+        -------
+            int : Number of rounds this player had this area under control.
+        """
+        return self.area_control_counts[area.name]
 
     @property    
     def forces(self):
