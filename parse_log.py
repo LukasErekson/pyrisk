@@ -278,15 +278,15 @@ if __name__ == "__main__":
             #order = [North America,South America, Africa, Europe, Asia, Australia]
             #rewards = [5,2,3,5,7,2]
             # then matrix multiplication gives the continental rewards
-            df[f'Player {i} Continental Reward'] = df[x].values @ [5,2,3,5,7,2]
+            unit_df[f'Player {i} Continental Reward'] = unit_df[x].values @ [5,2,3,5,7,2]
 
             #get number of troops per player and country count
             # then get total troop increase per player per turn
             x = list_player_countries(player_num=i)
-            df[f'Player {i} Troop Count'] = df[x].sum(axis=1)
-            df[f'Player {i} Country Count'] = (df[x] > 0).sum(axis=1)
-            df[f'Player {i} Troop Increase Due to Country Count'] = df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
-            df[f'Player {i} Total Reinforcements'] = df[f'Player {i} Troop Increase Due to Country Count'] + df[f'Player {i} Continental Reward']
+            unit_df[f'Player {i} Troop Count'] = unit_df[x].sum(axis=1)
+            unit_df[f'Player {i} Country Count'] = (unit_df[x] > 0).sum(axis=1)
+            unit_df[f'Player {i} Troop Increase Due to Country Count'] = unit_df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
+            unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
 
 
         # Add winner column
