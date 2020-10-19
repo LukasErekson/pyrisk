@@ -189,7 +189,7 @@ if __name__ == "__main__":
             loser_pattern = re.compile("'elimination', .*, '(P;[A-Z;a-z;_]+)'")
             losers = re.findall(loser_pattern, file)
             for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
-                unit_df[place] = losers[-1]
+                unit_df[place] = int(player_index[losers[-1]])
                 losers.pop()
 
         # Save the dataframe to the hdf file.
