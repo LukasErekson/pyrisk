@@ -61,8 +61,10 @@ AREA_INDEX = {'North America': 0,
               'Asia': 4,
               'Australia': 5}
 
+
 def list_player_continents(player_num):
-    """  A robust way to select which columns are needed to compute continental control and rewards
+    """  A robust way to select which columns are needed to compute
+    continental control and rewards.
 
     Parameters:
         player_num (int): the index pertaining to the player
@@ -72,15 +74,17 @@ def list_player_continents(player_num):
 
      """
     x = [f'Player {player_num} North America',
-       f'Player {player_num} South America',
-       f'Player {player_num} Africa',
-       f'Player {player_num} Europe',
-       f'Player {player_num} Asia',
-       f'Player {player_num} Australia']
+         f'Player {player_num} South America',
+         f'Player {player_num} Africa',
+         f'Player {player_num} Europe',
+         f'Player {player_num} Asia',
+         f'Player {player_num} Australia']
     return x
 
+
 def list_player_countries(player_num):
-    """ A robust way to select which columns are needed to compute total troop count and other features, pertaining to state of the board
+    """ A robust way to select which columns are needed to compute total
+    troop count and other features, pertaining to state of the board
 
     Parameters:
         player_num (int): the index pertaining to the player
@@ -91,49 +95,50 @@ def list_player_countries(player_num):
     """
 
     x = [f'Player {player_num} Alaska',
-     f'Player {player_num} Northwest Territories',
-     f'Player {player_num} Greenland',
-     f'Player {player_num} Alberta',
-     f'Player {player_num} Ontario',
-     f'Player {player_num} Quebec',
-     f'Player {player_num} Western United States',
-     f'Player {player_num} Eastern United States',
-     f'Player {player_num} Mexico',
-     f'Player {player_num} Venezuala',
-     f'Player {player_num} Peru',
-     f'Player {player_num} Argentina',
-     f'Player {player_num} Brazil',
-     f'Player {player_num} Iceland',
-     f'Player {player_num} Great Britain',
-     f'Player {player_num} Scandanavia',
-     f'Player {player_num} Western Europe',
-     f'Player {player_num} Northern Europe',
-     f'Player {player_num} Southern Europe',
-     f'Player {player_num} Ukraine',
-     f'Player {player_num} North Africa',
-     f'Player {player_num} Egypt',
-     f'Player {player_num} East Africa',
-     f'Player {player_num} Congo',
-     f'Player {player_num} South Africa',
-     f'Player {player_num} Madagascar',
-     f'Player {player_num} Middle East',
-     f'Player {player_num} Ural',
-     f'Player {player_num} Siberia',
-     f'Player {player_num} Yakutsk',
-     f'Player {player_num} Irkutsk',
-     f'Player {player_num} Kamchatka',
-     f'Player {player_num} Afghanistan',
-     f'Player {player_num} Mongolia',
-     f'Player {player_num} China',
-     f'Player {player_num} Japan',
-     f'Player {player_num} India',
-     f'Player {player_num} South East Asia',
-     f'Player {player_num} Indonesia',
-     f'Player {player_num} New Guinea',
-     f'Player {player_num} Western Australia',
-     f'Player {player_num} Eastern Australia']
+         f'Player {player_num} Northwest Territories',
+         f'Player {player_num} Greenland',
+         f'Player {player_num} Alberta',
+         f'Player {player_num} Ontario',
+         f'Player {player_num} Quebec',
+         f'Player {player_num} Western United States',
+         f'Player {player_num} Eastern United States',
+         f'Player {player_num} Mexico',
+         f'Player {player_num} Venezuala',
+         f'Player {player_num} Peru',
+         f'Player {player_num} Argentina',
+         f'Player {player_num} Brazil',
+         f'Player {player_num} Iceland',
+         f'Player {player_num} Great Britain',
+         f'Player {player_num} Scandanavia',
+         f'Player {player_num} Western Europe',
+         f'Player {player_num} Northern Europe',
+         f'Player {player_num} Southern Europe',
+         f'Player {player_num} Ukraine',
+         f'Player {player_num} North Africa',
+         f'Player {player_num} Egypt',
+         f'Player {player_num} East Africa',
+         f'Player {player_num} Congo',
+         f'Player {player_num} South Africa',
+         f'Player {player_num} Madagascar',
+         f'Player {player_num} Middle East',
+         f'Player {player_num} Ural',
+         f'Player {player_num} Siberia',
+         f'Player {player_num} Yakutsk',
+         f'Player {player_num} Irkutsk',
+         f'Player {player_num} Kamchatka',
+         f'Player {player_num} Afghanistan',
+         f'Player {player_num} Mongolia',
+         f'Player {player_num} China',
+         f'Player {player_num} Japan',
+         f'Player {player_num} India',
+         f'Player {player_num} South East Asia',
+         f'Player {player_num} Indonesia',
+         f'Player {player_num} New Guinea',
+         f'Player {player_num} Western Australia',
+         f'Player {player_num} Eastern Australia']
 
     return x
+
 
 def troop_income_due_to_country_possesion(s):
     """
@@ -149,7 +154,8 @@ def troop_income_due_to_country_possesion(s):
     # if a player has no countries they will receive no incoming troops
     if s == 0:
         return 0
-    # each player receives at least 3 troops per turn, must have 12 countries or more to get 4+ troops
+    # each player receives at least 3 troops per turn, must have 12 
+    # countries or more to get 4+ troops
     if s < 12:
         return 3
     else:
