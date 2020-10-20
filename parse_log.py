@@ -177,13 +177,13 @@ if __name__ == "__main__":
     if not os.path.exists(os.getcwd() + '/' + output_dir):
         os.system('mkdir {}'.format(output_dir))
 
-    files_to_parse = glob(input_dir + '/*.txt')
+    files_to_parse = glob(input_dir + '/*.log')
     for k, filename in enumerate(files_to_parse):
-
+        
         if "win_summary" in filename:
             #skip win summaries because they are formatted differently
             continue
-
+        
         file = ""
         with open(filename, 'r') as fi:
             file = fi.read()
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         for player in p_name_list:
             for territory in T_INDEX.keys():
                 header.append('Player ' + str(player_index[player]) + ' ' + territory)
-
+        
         # Create and populate the dataframe
         unit_df = pd.DataFrame(df_Unit_list)
         unit_df.columns = header
@@ -302,7 +302,7 @@ if __name__ == "__main__":
             loser_pattern = re.compile("'elimination', .*, '(P;[A-Z;a-z;_]+)'")
             losers = re.findall(loser_pattern, file)
             for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
-                unit_df[place] = losers[-1]
+                unit_df[place] = int(player_index[losers[-1]])
                 losers.pop()
 
         # Save the dataframe to the hdf file.
