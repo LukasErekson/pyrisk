@@ -146,9 +146,11 @@ def troop_income_due_to_country_possesion(s):
     Returns:
         n (int): number of troops to receive next turn
     """
-    country_triple_count = s // 3
+    # if a player has no countries they will receive no incoming troops
+    if s == 0:
+        return 0
     # each player receives at least 3 troops per turn, must have 12 countries or more to get 4+ troops
-    if country_triple_count <= 3:
+    if s < 12:
         return 3
     else:
         return s // 3
