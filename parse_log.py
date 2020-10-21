@@ -183,7 +183,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.getcwd() + '/' + output_dir):
         os.system('mkdir {}'.format(output_dir))
 
-    files_to_parse = glob(input_dir + '/*.log')
+    files_to_parse = glob(input_dir + '/**/*.log', recursive=True)
     for k, filename in enumerate(files_to_parse):
         
         if "win_summary" in filename:
@@ -219,10 +219,15 @@ if __name__ == "__main__":
 
         # No winner, stalemate
         except IndexError:
-            stalemate_pattern = re.compile("([0-9]+), 'Stalemate'")
-            total_turns = re.findall(stalemate_pattern, file)[0]
-            winner = "None"
-            total_turns = int(total_turns)
+            try:
+                stalemate_pattern = re.compile("([0-9]+), 'Stalemate'")
+                total_turns = re.findall(stalemate_pattern, file)[0]
+                winner = "None"
+                total_turns = int(total_turns)
+            
+            except Exception as e:
+                print(filename, e)
+                continue
 
         # Player areas after each turn
         player_area_pattern = re.compile("([0-9]+), 'Player Areas', '([A-Z_a-z;]+)', ['\"]\[(.*)\]['\"]\]")
