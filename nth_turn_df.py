@@ -23,7 +23,13 @@ if __name__ == '__main__':
     assert len(sys.argv) == 4, "Please input list of directories, turn number, and output file name."
 
     # Extract the list of directories
-    dirs = sys.argv[1][1:-1].split(',')
+    dirs = sys.argv[1]
+
+    # Get rid of brackets if they exist
+    if dirs[0] == '[':
+        dirs = dirs[1:-1].split(',')
+    else:
+        dirs = dirs.split(',')
 
     # Get the turn number to extract
     turn_num = int(sys.argv[2])
