@@ -61,6 +61,106 @@ AREA_INDEX = {'North America': 0,
               'Asia': 4,
               'Australia': 5}
 
+
+def list_player_continents(player_num):
+    """  A robust way to select which columns are needed to compute
+    continental control and rewards.
+
+    Parameters:
+        player_num (int): the index pertaining to the player
+
+    Returns:
+        x (list): A list that is used to select specific columns in dataframe
+
+     """
+    x = [f'Player {player_num} North America',
+         f'Player {player_num} South America',
+         f'Player {player_num} Africa',
+         f'Player {player_num} Europe',
+         f'Player {player_num} Asia',
+         f'Player {player_num} Australia']
+    return x
+
+
+def list_player_countries(player_num):
+    """ A robust way to select which columns are needed to compute total
+    troop count and other features, pertaining to state of the board
+
+    Parameters:
+        player_num (int): the index pertaining to the player
+
+    Returns:
+        x (list): A list that is used to select specific columns in dataframe
+
+    """
+
+    x = [f'Player {player_num} Alaska',
+         f'Player {player_num} Northwest Territories',
+         f'Player {player_num} Greenland',
+         f'Player {player_num} Alberta',
+         f'Player {player_num} Ontario',
+         f'Player {player_num} Quebec',
+         f'Player {player_num} Western United States',
+         f'Player {player_num} Eastern United States',
+         f'Player {player_num} Mexico',
+         f'Player {player_num} Venezuala',
+         f'Player {player_num} Peru',
+         f'Player {player_num} Argentina',
+         f'Player {player_num} Brazil',
+         f'Player {player_num} Iceland',
+         f'Player {player_num} Great Britain',
+         f'Player {player_num} Scandanavia',
+         f'Player {player_num} Western Europe',
+         f'Player {player_num} Northern Europe',
+         f'Player {player_num} Southern Europe',
+         f'Player {player_num} Ukraine',
+         f'Player {player_num} North Africa',
+         f'Player {player_num} Egypt',
+         f'Player {player_num} East Africa',
+         f'Player {player_num} Congo',
+         f'Player {player_num} South Africa',
+         f'Player {player_num} Madagascar',
+         f'Player {player_num} Middle East',
+         f'Player {player_num} Ural',
+         f'Player {player_num} Siberia',
+         f'Player {player_num} Yakutsk',
+         f'Player {player_num} Irkutsk',
+         f'Player {player_num} Kamchatka',
+         f'Player {player_num} Afghanistan',
+         f'Player {player_num} Mongolia',
+         f'Player {player_num} China',
+         f'Player {player_num} Japan',
+         f'Player {player_num} India',
+         f'Player {player_num} South East Asia',
+         f'Player {player_num} Indonesia',
+         f'Player {player_num} New Guinea',
+         f'Player {player_num} Western Australia',
+         f'Player {player_num} Eastern Australia']
+
+    return x
+
+
+def troop_income_due_to_country_possesion(s):
+    """
+    Get the portion of troop income pertaining to country count
+
+    Parameters
+        s : the number of countries the player has
+        i : the index pertaining to the player
+
+    Returns:
+        n (int): number of troops to receive next turn
+    """
+    # if a player has no countries they will receive no incoming troops
+    if s == 0:
+        return 0
+    # each player receives at least 3 troops per turn, must have 12 
+    # countries or more to get 4+ troops
+    if s < 12:
+        return 3
+    else:
+        return s // 3
+
 if __name__ == "__main__":
     # Take in an argument for the file name and ouput file. If none is
     # specified, use the defaults.
@@ -83,7 +183,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.getcwd() + '/' + output_dir):
         os.system('mkdir {}'.format(output_dir))
 
-    files_to_parse = glob(input_dir + '/*.log')
+    files_to_parse = glob(input_dir + '/**/*.log', recursive=True)
     for k, filename in enumerate(files_to_parse):
         
         if "win_summary" in filename:
@@ -119,10 +219,15 @@ if __name__ == "__main__":
 
         # No winner, stalemate
         except IndexError:
-            stalemate_pattern = re.compile("([0-9]+), 'Stalemate'")
-            total_turns = re.findall(stalemate_pattern, file)[0]
-            winner = "None"
-            total_turns = int(total_turns)
+            try:
+                stalemate_pattern = re.compile("([0-9]+), 'Stalemate'")
+                total_turns = re.findall(stalemate_pattern, file)[0]
+                winner = "None"
+                total_turns = int(total_turns)
+            
+            except Exception as e:
+                print(filename, e)
+                continue
 
         # Player areas after each turn
         player_area_pattern = re.compile("([0-9]+), 'Player Areas', '([A-Z_a-z;]+)', ['\"]\[(.*)\]['\"]\]")
@@ -177,6 +282,25 @@ if __name__ == "__main__":
             for area in AREA_INDEX.keys():
                 col_title = 'Player ' + str(p_index) + ' ' + area
                 unit_df[col_title] = Area_lists[AREA_INDEX[area], p_index, :]
+
+        #create some features
+        for i in range(num_players):
+            #get the columns for the continental control for that player
+            x = list_player_continents(i)
+            # Assuming that the following ordering, and rewards per continent
+            #order = [North America,South America, Africa, Europe, Asia, Australia]
+            #rewards = [5,2,3,5,7,2]
+            # then matrix multiplication gives the continental rewards
+            unit_df[f'Player {i} Continental Reward'] = unit_df[x].values @ [5,2,3,5,7,2]
+
+            #get number of troops per player and country count
+            # then get total troop increase per player per turn
+            x = list_player_countries(player_num=i)
+            unit_df[f'Player {i} Troop Count'] = unit_df[x].sum(axis=1)
+            unit_df[f'Player {i} Country Count'] = (unit_df[x] > 0).sum(axis=1)
+            unit_df[f'Player {i} Troop Increase Due to Country Count'] = unit_df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
+            unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
+
 
         # Add winner column
         if winner is 'None':
