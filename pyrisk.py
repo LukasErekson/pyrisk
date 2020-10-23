@@ -73,7 +73,9 @@ def configure_logger(logger, base_filename, pid, game=None):
     #formatter = logging.Formatter('%(asctime)s - %(name)-14s - %(levelname)-8s - %(message)s')
     formatter = logging.Formatter('%(name)s:%(levelname)s:%(message)s')
     while logger.hasHandlers(): #DO NOT REMOVE, you will cause bugs
-        logger.handlers.pop().close()
+        handler = logger.handlers.pop()
+        handler.close()
+        del handler
     if (base_filename):
         logfile = "logs/{}{}.log".format(base_filename, pid)
         if game is not None:
@@ -85,10 +87,10 @@ def configure_logger(logger, base_filename, pid, game=None):
    
 def launch_in_process(pid, games, queue, args, **kwargs):
     wins = collections.defaultdict(int)
+    logger = logging.getLogger("pyrisk{}".format(pid))
+    kwargs['logger'] = logger
     for j in range(games):
-        # Use different loggers for each process and agme
-        logger = logging.getLogger("pyrisk{}_{}".format(pid, j))
-        kwargs['logger'] = logger
+        # Use different loggers for each process and game
         configure_logger(logger, args.log, pid, game=j+1)
         kwargs['round'] = (j+1, args.games)
         kwargs['history'] = wins
