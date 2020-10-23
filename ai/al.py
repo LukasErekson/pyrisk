@@ -35,10 +35,12 @@ class AlAI(AI):
         while not priority:
             priority = [t for t in self.player.territories if t.area.name == self.area_priority[i] and t.border]
             i += 1
-        reinforce_each = available / len(priority)
-        remain = available - reinforce_each * len(priority)
+        reinforce_each = available // len(priority)
+        remain = available % len(priority)
         result = {p: reinforce_each for p in priority}
-        result[priority[0]] += remain
+        while remain:
+            result[random.choice(priority)] += 1
+            remain -= 1
         return result
 
     def attack(self):
