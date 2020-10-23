@@ -5,10 +5,16 @@ import h5py
 import re
 import sys
 import os
+from world import CONNECT, T_INDEX
+import networkx as nx
 
 """Draft of a log parsing script. This should make it easy to take a log
 file and create the data types and files we want for each game.
 """
+#turn to false in vim, before running on big file directory
+debug=False
+log_file_format = '.txt' #joey has used this
+log_file_format = '.log'
 
 # Index of territories to their integer index
 T_INDEX = {'Alaska': 0,
@@ -61,7 +67,6 @@ AREA_INDEX = {'North America': 0,
               'Asia': 4,
               'Australia': 5}
 
-
 def list_player_continents(player_num):
     """  A robust way to select which columns are needed to compute
     continental control and rewards.
@@ -80,7 +85,6 @@ def list_player_continents(player_num):
          f'Player {player_num} Asia',
          f'Player {player_num} Australia']
     return x
-
 
 def list_player_countries(player_num):
     """ A robust way to select which columns are needed to compute total
@@ -139,7 +143,6 @@ def list_player_countries(player_num):
 
     return x
 
-
 def troop_income_due_to_country_possesion(s):
     """
     Get the portion of troop income pertaining to country count
@@ -154,12 +157,109 @@ def troop_income_due_to_country_possesion(s):
     # if a player has no countries they will receive no incoming troops
     if s == 0:
         return 0
-    # each player receives at least 3 troops per turn, must have 12 
+    # each player receives at least 3 troops per turn, must have 12
     # countries or more to get 4+ troops
     if s < 12:
         return 3
     else:
         return s // 3
+
+def get_board_names_for_players(num_players):
+    """ Similar to list_player_countries, this returns a 1d list
+    of all the countries from n players in order, thus robustly
+    selecting the columns that describe the state of the board. This
+    function is useful for carefully choosing the input for graph features
+
+    Output is similar to the array below (which is for a 6 player game):
+
+    array(['Player 0 Alaska', 'Player 0 Northwest Territories',
+       'Player 0 Greenland',
+
+       ....
+
+       ,'Player 5 New Guinea',
+       'Player 5 Western Australia', 'Player 5 Eastern Australia'])
+
+
+    Parameters:
+        num_players (int): 2 \leq num_players \leq 6
+
+    Returns:
+        names_of_player_countries ((42*n,) ndarray): names of columns describing state of the game
+
+    """
+
+    names_of_player_countries = np.array(list_player_countries(player_num=0))
+    for i in range(1,num_players):
+        names_of_player_countries = np.hstack((names_of_player_countries,list_player_countries(player_num=i)))
+
+    return names_of_player_countries
+
+def get_graph_features(row):
+    """
+    Returns graph-related features given the current state of the game:
+    Parameters:
+        row (list, len=num_players*42): a list of how many troops each player has in each territory
+                                        can be obtained from the dataframe easily
+    Returns:
+        player_cut_edges: number of boundary edges which cross into the player's controlled area
+        player_number_boundary_nodes: number of territories that make up the boundary of the player's controlled area
+        player_boundary_fortifications: total number of troops on the boundary of the player's controlled area
+        player_average_boundary_fortifications: average number of troops in each boundary territory
+        player_connected_components: number of connected components in the area the player controls
+    Each item returned is a list of length num_players, which has each of the features calculated for each player
+    """
+
+    # Make a copy of the risk graph
+    g = GRAPH.copy()
+    n = len(row)//42
+
+    # Add troops and player info to this graph
+    for i in range(42):
+        r = row[i*n:(i+1)*n]
+        g.nodes[TERR[i]]['troops'] = max(r)
+        g.nodes[TERR[i]]['player'] = r.index(g.nodes[TERR[i]]['troops'])
+
+    # Initialize feature containers
+    player_cut_edges = [0]*n
+    player_boundary_nodes = [set()]*n # helper feature
+    player_number_boundary_nodes = [0]*n
+    player_boundary_fortifications = [0]*n
+    player_average_boundary_fortifications = [0]*n
+    player_connected_components = [0]*n
+
+    # Iterate through edges
+    for edge in g.edges:
+        p1, p2 = g.nodes[edge[0]]['player'],  g.nodes[edge[1]]['player']
+        if p1 != p2:
+            # Update cut edge counts
+            player_cut_edges[p1] += 1
+            player_cut_edges[p2] += 1
+
+            # Update boundary nodes
+            player_boundary_nodes[p1].add(edge[0])
+            player_boundary_nodes[p2].add(edge[1])
+
+    total_cut_edges = sum(player_cut_edges)//2
+
+    # Iterate through players
+    for i in range(n):
+
+        # Get the subgraph for each player
+        player_graph = g.subgraph([j for j in g.nodes if g.nodes[j]['player'] == i])
+        player_connected_components[i] = len(list(nx.connected_components(player_graph)))
+
+        # Update boundary node counts
+        player_number_boundary_nodes[i] = len(player_boundary_nodes[i])
+
+        # Iterate through boundary nodes
+        for n in player_boundary_nodes[i]:
+            player_boundary_fortifications[i] += g.nodes[n]['troops']
+
+        player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
+#         print('this is just troubleshooting')
+#         player_average_boundary_fortifications[i] = -1
+    return [player_cut_edges, player_number_boundary_nodes, player_boundary_fortifications, player_average_boundary_fortifications, player_connected_components]
 
 if __name__ == "__main__":
     # Take in an argument for the file name and ouput file. If none is
@@ -183,13 +283,15 @@ if __name__ == "__main__":
     if not os.path.exists(os.getcwd() + '/' + output_dir):
         os.system('mkdir {}'.format(output_dir))
 
-    files_to_parse = glob(input_dir + '/**/*.log', recursive=True)
+    files_to_parse = glob(input_dir + '/**/*' + log_file_format, recursive=True)
+    if debug:
+        print('# of files to parse',len(files_to_parse))
     for k, filename in enumerate(files_to_parse):
-        
+
         if "win_summary" in filename:
             #skip win summaries because they are formatted differently
             continue
-        
+
         file = ""
         with open(filename, 'r') as fi:
             file = fi.read()
@@ -224,7 +326,7 @@ if __name__ == "__main__":
                 total_turns = re.findall(stalemate_pattern, file)[0]
                 winner = "None"
                 total_turns = int(total_turns)
-            
+
             except Exception as e:
                 print(filename, e)
                 continue
@@ -271,7 +373,7 @@ if __name__ == "__main__":
         for player in p_name_list:
             for territory in T_INDEX.keys():
                 header.append('Player ' + str(player_index[player]) + ' ' + territory)
-        
+
         # Create and populate the dataframe
         unit_df = pd.DataFrame(df_Unit_list)
         unit_df.columns = header
@@ -301,6 +403,45 @@ if __name__ == "__main__":
             unit_df[f'Player {i} Troop Increase Due to Country Count'] = unit_df[f'Player {i} Country Count'].apply(troop_income_due_to_country_possesion)
             unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
 
+        if debug:
+            print(filename,df.shape)
+
+        ## create graphical features
+        # Initialize a graph of the risk map
+        GRAPH = nx.Graph()
+        # Get a list of territories
+        TERR = list(T_INDEX.keys())
+        # Get a list of edges from the CONNECT string
+        EDGES = []
+        for line in CONNECT.split('\n'):
+            if line != '':
+                l = line.split('--')
+                EDGES += [(l[i], l[i+1]) for i in range(len(l)-1)]
+        # Populate the graph
+        GRAPH.add_nodes_from(TERR)
+        GRAPH.add_edges_from(EDGES)
+        # if new features are added, then these should be changed
+        graph_features = ['player_cut_edges'
+            , 'player_number_boundary_nodes'
+            , 'player_boundary_fortifications'
+            , 'player_average_boundary_fortifications'
+            , 'player_connected_components']
+        x = get_board_names_for_players(num_players)
+        results = []
+        for t in range(unit_df.shape[0]):
+            l = get_graph_features(list(unit_df[x].iloc[t].values))
+            results.append(l)
+        r = np.array(results)
+        #this is just to make sure the reshaping is done correctly
+        # unit_df['graph_features'] = [x for x in np.array(results)]
+        #get names for new columns / features
+        new_names = []
+        for feature in graph_features:
+            for i in range(num_players):
+                new_names.append(f'Player {i} {feature}')
+        #add the features
+        new = pd.DataFrame(r.reshape(unit_df.shape[0],len(graph_features)*num_players),columns=new_names)
+        unit_df = unit_df.merge(new,how='inner',left_index=True,right_index=True)
 
         # Add winner column
         if winner is 'None':
