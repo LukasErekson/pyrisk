@@ -222,7 +222,7 @@ def get_graph_features(row):
 
     # Initialize feature containers
     player_cut_edges = [0]*n
-    player_boundary_nodes = [set()]*n # helper feature
+    player_boundary_nodes = [set() for i in range(n)] # helper feature
     player_number_boundary_nodes = [0]*n
     player_boundary_fortifications = [0]*n
     player_average_boundary_fortifications = [0]*n
