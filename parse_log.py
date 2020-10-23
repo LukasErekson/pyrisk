@@ -4,13 +4,9 @@ from glob import glob
 import h5py
 import re
 import sys
-<<<<<<< HEAD
 import os, os.path
-=======
-import os
 from world import CONNECT, T_INDEX
 import networkx as nx
->>>>>>> ef2743206c60dc97b6093e701588a088256c8244
 
 """Draft of a log parsing script. This should make it easy to take a log
 file and create the data types and files we want for each game.
