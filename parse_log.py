@@ -4,7 +4,7 @@ from glob import glob
 import h5py
 import re
 import sys
-import os
+import os, os.path
 
 """Draft of a log parsing script. This should make it easy to take a log
 file and create the data types and files we want for each game.
@@ -180,8 +180,8 @@ if __name__ == "__main__":
         output_file = '/parsed_log.hdf'
 
     # Create the output folder if it doesn't already exist
-    if not os.path.exists(os.getcwd() + '/' + output_dir):
-        os.system('mkdir {}'.format(output_dir))
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     files_to_parse = glob(input_dir + '/**/*.log', recursive=True)
     for k, filename in enumerate(files_to_parse):
