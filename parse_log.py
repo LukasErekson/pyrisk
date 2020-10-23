@@ -255,8 +255,11 @@ def get_graph_features(row):
         # Iterate through boundary nodes
         for n in player_boundary_nodes[i]:
             player_boundary_fortifications[i] += g.nodes[n]['troops']
-
-        player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
+        
+        if player_number_boundary_nodes[i] != 0:
+            player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
+        else:
+            player_average_boundary_fortifications[i] = 0
 #         print('this is just troubleshooting')
 #         player_average_boundary_fortifications[i] = -1
     return [player_cut_edges, player_number_boundary_nodes, player_boundary_fortifications, player_average_boundary_fortifications, player_connected_components]
@@ -448,15 +451,19 @@ if __name__ == "__main__":
             unit_df['winner'] = np.nan
             for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
                 unit_df[place] = np.nan
+            for i in range(num_players): #add per player soft score
+                unit_df[f'Player {i} soft score'] = num_players**-1
         else:
             unit_df['winner'] = player_index[winner]
+            unit_df[f'Player {int(player_index[winner])} soft score'] = 1
             # Add Loser columns columns
             loser_pattern = re.compile("'elimination', .*, '(P;[A-Z;a-z;_]+)'")
             losers = re.findall(loser_pattern, file)
-            for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
+            for i, place in enumerate(['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]):
                 unit_df[place] = int(player_index[losers[-1]])
+                unit_df[f'Player {int(player_index[losers[-1]])} soft score'] = (i+2)**-1
                 losers.pop()
-
+                
         # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
 
@@ -464,8 +471,6 @@ if __name__ == "__main__":
         data = {"players": [(np.string_(p), player_index[p]) for p in p_name_list]}  # HDF5 is picky about strings
 
         # Save as an HDF
-        hf = h5py.File(output_dir + "/" + output_file + str(k) + '.hdf', 'a')
-        for k in data.keys():
-            hf[k] = data[k]
-
-        hf.close()
+        with h5py.File(output_dir + "/" + output_file + str(k) + '.hdf', 'a') as hf:
+            for k in data.keys():
+                hf[k] = data[k]
