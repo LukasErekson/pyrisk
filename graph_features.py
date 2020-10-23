@@ -48,7 +48,7 @@ def get_graph_features(row):
 
     # Initialize feature containers
     player_cut_edges = [0]*n
-    player_boundary_nodes = [set()]*n # helper feature
+    player_boundary_nodes = [set() for i in range(n)] # helper feature
     player_number_boundary_nodes = [0]*n
     player_boundary_fortifications = [0]*n
     player_average_boundary_fortifications = [0]*n
@@ -65,6 +65,9 @@ def get_graph_features(row):
             # Update boundary nodes
             player_boundary_nodes[p1].add(edge[0])
             player_boundary_nodes[p2].add(edge[1])
+
+
+            print(player_boundary_nodes)
 
     total_cut_edges = sum(player_cut_edges)//2
 
