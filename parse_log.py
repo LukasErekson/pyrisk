@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
     else:
         output_dir = 'default_log_data'
-        output_file = '/parsed_log.hdf'
+        output_file = '/parsed_log'
 
     # Create the output folder if it doesn't already exist
     if not os.path.exists(output_dir):
