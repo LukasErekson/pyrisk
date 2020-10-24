@@ -5,8 +5,8 @@ import h5py
 import re
 import sys
 import os, os.path
-from world import CONNECT, T_INDEX
-import networkx as nx
+from world import T_INDEX
+from graph_features import get_graph_features
 
 """Draft of a log parsing script. This should make it easy to take a log
 file and create the data types and files we want for each game.
@@ -15,50 +15,6 @@ file and create the data types and files we want for each game.
 debug=False
 log_file_format = '.txt' #joey has used this
 log_file_format = '.log'
-
-# Index of territories to their integer index
-T_INDEX = {'Alaska': 0,
-           'Northwest Territories': 1,
-           'Greenland': 2,
-           'Alberta': 3,
-           'Ontario': 4,
-           'Quebec': 5,
-           'Western United States': 6,
-           'Eastern United States': 7,
-           'Mexico': 8,
-           'Venezuala': 9,
-           'Peru': 10,
-           'Argentina': 11,
-           'Brazil': 12,
-           'Iceland': 13,
-           'Great Britain': 14,
-           'Scandanavia': 15,
-           'Western Europe': 16,
-           'Northern Europe': 17,
-           'Southern Europe': 18,
-           'Ukraine': 19,
-           'North Africa': 20,
-           'Egypt': 21,
-           'East Africa': 22,
-           'Congo': 23,
-           'South Africa': 24,
-           'Madagascar': 25,
-           'Middle East': 26,
-           'Ural': 27,
-           'Siberia': 28,
-           'Yakutsk': 29,
-           'Irkutsk': 30,
-           'Kamchatka': 31,
-           'Afghanistan': 32,
-           'Mongolia': 33,
-           'China': 34,
-           'Japan': 35,
-           'India': 36,
-           'South East Asia': 37,
-           'Indonesia': 38,
-           'New Guinea': 39,
-           'Western Australia': 40,
-           'Eastern Australia': 41}
 
 AREA_INDEX = {'North America': 0,
               'South America': 1,
@@ -194,75 +150,6 @@ def get_board_names_for_players(num_players):
         names_of_player_countries = np.hstack((names_of_player_countries,list_player_countries(player_num=i)))
 
     return names_of_player_countries
-
-def get_graph_features(row):
-    """
-    Returns graph-related features given the current state of the game:
-    Parameters:
-        row (list, len=num_players*42): a list of how many troops each player has in each territory
-                                        can be obtained from the dataframe easily
-    Returns:
-        player_cut_edges: number of boundary edges which cross into the player's controlled area
-        player_number_boundary_nodes: number of territories that make up the boundary of the player's controlled area
-        player_boundary_fortifications: total number of troops on the boundary of the player's controlled area
-        player_average_boundary_fortifications: average number of troops in each boundary territory
-        player_connected_components: number of connected components in the area the player controls
-    Each item returned is a list of length num_players, which has each of the features calculated for each player
-    """
-
-    # Make a copy of the risk graph
-    g = GRAPH.copy()
-    n = len(row)//42
-
-    # Add troops and player info to this graph
-    for i in range(42):
-        r = row[i*n:(i+1)*n]
-        g.nodes[TERR[i]]['troops'] = max(r)
-        g.nodes[TERR[i]]['player'] = r.index(g.nodes[TERR[i]]['troops'])
-
-    # Initialize feature containers
-    player_cut_edges = [0]*n
-    player_boundary_nodes = [set() for i in range(n)] # helper feature
-    player_number_boundary_nodes = [0]*n
-    player_boundary_fortifications = [0]*n
-    player_average_boundary_fortifications = [0]*n
-    player_connected_components = [0]*n
-
-    # Iterate through edges
-    for edge in g.edges:
-        p1, p2 = g.nodes[edge[0]]['player'],  g.nodes[edge[1]]['player']
-        if p1 != p2:
-            # Update cut edge counts
-            player_cut_edges[p1] += 1
-            player_cut_edges[p2] += 1
-
-            # Update boundary nodes
-            player_boundary_nodes[p1].add(edge[0])
-            player_boundary_nodes[p2].add(edge[1])
-
-    total_cut_edges = sum(player_cut_edges)//2
-
-    # Iterate through players
-    for i in range(n):
-
-        # Get the subgraph for each player
-        player_graph = g.subgraph([j for j in g.nodes if g.nodes[j]['player'] == i])
-        player_connected_components[i] = len(list(nx.connected_components(player_graph)))
-
-        # Update boundary node counts
-        player_number_boundary_nodes[i] = len(player_boundary_nodes[i])
-
-        # Iterate through boundary nodes
-        for n in player_boundary_nodes[i]:
-            player_boundary_fortifications[i] += g.nodes[n]['troops']
-        
-        if player_number_boundary_nodes[i] != 0:
-            player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
-        else:
-            player_average_boundary_fortifications[i] = 0
-#         print('this is just troubleshooting')
-#         player_average_boundary_fortifications[i] = -1
-    return [player_cut_edges, player_number_boundary_nodes, player_boundary_fortifications, player_average_boundary_fortifications, player_connected_components]
 
 if __name__ == "__main__":
     # Take in an argument for the file name and ouput file. If none is
@@ -409,20 +296,6 @@ if __name__ == "__main__":
         if debug:
             print(filename,unit_df.shape)
 
-        ## create graphical features
-        # Initialize a graph of the risk map
-        GRAPH = nx.Graph()
-        # Get a list of territories
-        TERR = list(T_INDEX.keys())
-        # Get a list of edges from the CONNECT string
-        EDGES = []
-        for line in CONNECT.split('\n'):
-            if line != '':
-                l = line.split('--')
-                EDGES += [(l[i], l[i+1]) for i in range(len(l)-1)]
-        # Populate the graph
-        GRAPH.add_nodes_from(TERR)
-        GRAPH.add_edges_from(EDGES)
         # if new features are added, then these should be changed
         graph_features = ['player_cut_edges'
             , 'player_number_boundary_nodes'

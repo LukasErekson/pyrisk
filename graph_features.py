@@ -18,6 +18,8 @@ for line in CONNECT.split('\n'):
 GRAPH.add_nodes_from(TERR)
 GRAPH.add_edges_from(EDGES)
 
+debug=False
+
 def get_graph_features(row):
     """
     Returns graph-related features given the current state of the game:
@@ -66,8 +68,8 @@ def get_graph_features(row):
             player_boundary_nodes[p1].add(edge[0])
             player_boundary_nodes[p2].add(edge[1])
 
-
-            print(player_boundary_nodes)
+            if debug: 
+                print(player_boundary_nodes)
 
     total_cut_edges = sum(player_cut_edges)//2
 
@@ -85,6 +87,9 @@ def get_graph_features(row):
         for n in player_boundary_nodes[i]:
             player_boundary_fortifications[i] += g.nodes[n]['troops']
 
-        player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
+        if player_number_boundary_nodes[i] > 0:
+            player_average_boundary_fortifications[i] = player_boundary_fortifications[i]/player_number_boundary_nodes[i]
+        else:
+            player_average_boundary_fortifications[i] = -1
 
     return player_cut_edges, player_number_boundary_nodes, player_boundary_fortifications, player_average_boundary_fortifications, player_connected_components
