@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
     else:
         output_dir = 'default_log_data'
-        output_file = '/parsed_log.hdf'
+        output_file = '/parsed_log'
 
     # Create the output folder if it doesn't already exist
     if not os.path.exists(output_dir):
@@ -407,7 +407,7 @@ if __name__ == "__main__":
             unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
 
         if debug:
-            print(filename,df.shape)
+            print(filename,unit_df.shape)
 
         ## create graphical features
         # Initialize a graph of the risk map
