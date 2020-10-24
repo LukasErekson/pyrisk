@@ -1,4 +1,4 @@
-from display import Display, CursesDisplay
+from display import Display
 from player import Player
 from territory import World
 from world import CONNECT, AREAS, MAP, KEY
@@ -40,6 +40,7 @@ class Game(object):
         self.turn_order = []
 
         if self.options['curses']:
+            from curses_display import CursesDisplay
             self.display = CursesDisplay(self.options['screen'], self,
                                          self.options['cmap'], self.options['ckey'],
                                          self.options['color'], self.options['wait'])
