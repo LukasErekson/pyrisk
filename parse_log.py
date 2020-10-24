@@ -407,7 +407,7 @@ if __name__ == "__main__":
             unit_df[f'Player {i} Total Reinforcements'] = unit_df[f'Player {i} Troop Increase Due to Country Count'] + unit_df[f'Player {i} Continental Reward']
 
         if debug:
-            print(filename,df.shape)
+            print(filename,unit_df.shape)
 
         ## create graphical features
         # Initialize a graph of the risk map
