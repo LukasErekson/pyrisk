@@ -216,7 +216,8 @@ if __name__ == "__main__":
                 total_turns = re.findall(stalemate_pattern, file)[0]
                 winner = "None"
                 total_turns = int(total_turns)
-
+	
+	    # Game never finished (interrupted maybe?) Skip parsing.
             except Exception as e:
                 print(filename, e)
                 continue
