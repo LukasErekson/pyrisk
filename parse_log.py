@@ -338,6 +338,9 @@ if __name__ == "__main__":
                 unit_df[f'Player {int(player_index[losers[-1]])} soft score'] = (i+2)**-1
                 losers.pop()
                 
+        # Add total_turns column to the data set
+        unit_df['total_turns'] = total_turns
+
         # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
 
