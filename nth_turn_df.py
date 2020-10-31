@@ -16,6 +16,7 @@ $ python3 nth_turn_df.py [dir1,dir2,dir3] 57 57_turn_df
 """
 
 import sys
+import h5py
 import pandas as pd
 from glob import glob
 
@@ -48,17 +49,33 @@ if __name__ == '__main__':
         for file in files:
             # Load each DataFrame file
             file_df = pd.read_hdf(file)
+            player_file = h5py.File(file, 'r')
 
             # Get the nth turn from each DataFrame (that has it)
             try:
                 out_df = out_df.append(file_df.iloc[turn_num])
 
+                # Add column if it's not in there yet
+                # TODO : Nicer way to do this not in a for loop?
+                if 'Player 0 AI' not in out_df.columns:
+                    for i in range(len(player_file['players'])):
+                        out_df[f'Player {i} AI'] = ''
+
+                # Get player AI types
+                for AItype, num in player_file['players']:
+                    # Have the AI Type in the appropriate column
+                    out_df[f'Player {int(num)} AI'].iloc[-1] = str(AItype).split(';')[-1][:-1]
+
             # Continue if the game doesn't have this particular turn number
             except IndexError:
                 continue
 
-            # Delete for memory
-            del file_df
+            finally:
+                # Close the player_file
+                player_file.close()
+                
+                # Delete for memory
+                del file_df
 
     # Reassign the index
     out_df.index = range(out_df.shape[0])
