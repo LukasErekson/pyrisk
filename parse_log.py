@@ -353,6 +353,8 @@ if __name__ == "__main__":
         for i in range(num_players):
             unit_df[f'Player {i} boundary territory %'] = unit_df[f'Player {i} player_number_boundary_nodes']/unit_df[f'Player {i} total territories']
             unit_df[f'Player {i} boundary troop %'] = unit_df[f'Player {i} player_boundary_fortifications']/unit_df[f'Player {i} Troop Count']
+            unit_df[f'Player {i} boundary territory %'].fillna(-1)
+            unit_df[f'Player {i} boundary troop %'].fillna(-1)
 
 
         # Save the dataframe to the hdf file.
