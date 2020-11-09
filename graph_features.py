@@ -44,7 +44,12 @@ def get_graph_features(row):
 
     # Add troops and player info to this graph
     for i in range(42):
-        r = row[i*n:(i+1)*n]
+        # for each territory
+
+        # r = row[i*n:(i+1)*n] # <-- wrong way
+
+        r = row[i::42] # <-- right way
+
         g.nodes[TERR[i]]['troops'] = max(r)
         g.nodes[TERR[i]]['player'] = r.index(g.nodes[TERR[i]]['troops'])
 
@@ -68,7 +73,7 @@ def get_graph_features(row):
             player_boundary_nodes[p1].add(edge[0])
             player_boundary_nodes[p2].add(edge[1])
 
-            if debug: 
+            if debug:
                 print(player_boundary_nodes)
 
     total_cut_edges = sum(player_cut_edges)//2
