@@ -269,6 +269,10 @@ if __name__ == "__main__":
         unit_df = pd.DataFrame(df_Unit_list)
         unit_df.columns = header
 
+        # Add some new columns to the DataFrame
+        for player in range(num_players):
+            unit_df[f'Player {player} total territories'] = np.sum(Unit_lists[:, player, :] != 0, axis=0)
+
         # Add area control columns
         for player in p_name_list:
             p_index = player_index[player]
@@ -321,7 +325,7 @@ if __name__ == "__main__":
         unit_df = unit_df.merge(new,how='inner',left_index=True,right_index=True)
 
         # Add winner column
-        if winner is 'None':
+        if winner == 'None':
             unit_df['winner'] = np.nan
             for place in ['Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][:num_players - 1]:
                 unit_df[place] = np.nan
@@ -340,6 +344,16 @@ if __name__ == "__main__":
                 
         # Add total_turns column to the data set
         unit_df['total_turns'] = total_turns
+
+        # Trim back the DataFrame to not include setup
+        unit_df = unit_df.iloc[25*num_players - 1:]
+        unit_df.index = np.arange(1, len(unit_df.index) + 1)
+
+        # Add Proportion of borders territories
+        for i in range(num_players):
+            unit_df[f'Player {i} boundary territory %'] = unit_df[f'Player {i} player_number_boundary_nodes']/unit_df[f'Player {i} total territories']
+            unit_df[f'Player {i} boundary troop %'] = unit_df[f'Player {i} player_boundary_fortifications']/unit_df[f'Player {i} Troop Count']
+
 
         # Save the dataframe to the hdf file.
         unit_df.to_hdf(output_dir + "/" + output_file + str(k) + '.hdf', 'dataframe')
