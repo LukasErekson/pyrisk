@@ -12,6 +12,7 @@ Our Changes
 -----------
 Our main contributions are
   - Modifications to the game files to add specific things to the log files.
+  - Implemented parallel processing, allowing one to use multiple cores to play hundreds of games very quickly.
   - parse_log.py to parse the log files into pandas dataframes.
   - graph_features.py to parse graphical features from the log files.
   - nth_turn_df.py to consolidate multiple games into one data set by collecting the nth turn from each.
