@@ -12,8 +12,8 @@ Our Changes
 -----------
 Our main contributions are
   - Modifications to the game files:
- 	- Fixed a bug in the AlAI
-    	- Allowed up to 6 players to play the game
+	- Fixed a bug in the AlAI
+	- Allowed up to 6 players to play the game
   	- Implemented parallel processing, allowing one to use multiple cores to play hundreds of games very quickly.
 	- Changed logging details to display states of the board for data collection (works with parse_log.py).
   - parse_log.py to parse the log files into pandas dataframes.
