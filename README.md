@@ -11,14 +11,16 @@ Runs in `python` (3.x) using the `curses` library to display the map (but can be
 Our Changes
 -----------
 Our main contributions are
-  - Modifications to the game files to add specific things to the log files.
-  - Implemented parallel processing, allowing one to use multiple cores to play hundreds of games very quickly.
+  - Modifications to the game files:
+ 	- Fixed a bug in the AlAI
+    	- Allowed up to 6 players to play the game
+  	- Implemented parallel processing, allowing one to use multiple cores to play hundreds of games very quickly.
+	- Changed logging details to display states of the board for data collection (works with parse_log.py).
   - parse_log.py to parse the log files into pandas dataframes.
   - graph_features.py to parse graphical features from the log files.
   - nth_turn_df.py to consolidate multiple games into one data set by collecting the nth turn from each.
   - Modeling.ipynb that has a basic logisitic regression model made with data that we generated.
-	- Fixed a bug in the AlAI
-	- allowed up to 6 players to play the game
+
 
 Because of the size of the games we generated for our model, we don't have any of the games on this repo. Every other file is more or less how we found it after forking the original repo.
 
@@ -34,7 +36,7 @@ Rules
 
 A minimal version of the **Risk** rules are used:
 
-- Players start with `35 - 5*players` armies.
+- Players start with 25 armies.
 - At the start of the game, territories are chosen one by one until all are claimed, and then the remaining armies may be deployed one at a time to reinforce claimed territories.
 - Each turn, players recieve `3 + territories/3` reinforcements, plus a bonus for any complete continents.
 - A player may make unlimited attacks per round into adjacent territories (including from freshly-conquered territories).
