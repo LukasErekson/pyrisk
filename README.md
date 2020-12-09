@@ -6,7 +6,7 @@ Intro
 
 A simple implementation of a variant of the **Risk** board game for python, designed for playing with AIs. Originally, this is a package developed by chronitis at https://github.com/chronitis/pyrisk and forked from leondeol. Our contributions were mainly ones that allowed for rapid and robust data generation to prepare it for analysis.
 
-Runs in `python` (2.7 or 3.x) using the `curses` library to display the map (but can be run in pure-console mode).
+Runs in `python` (3.x) using the `curses` library to display the map (but can be run in pure-console mode).
 
 Our Changes
 -----------
@@ -17,6 +17,8 @@ Our main contributions are
   - graph_features.py to parse graphical features from the log files.
   - nth_turn_df.py to consolidate multiple games into one data set by collecting the nth turn from each.
   - Modeling.ipynb that has a basic logisitic regression model made with data that we generated.
+	- Fixed a bug in the AlAI
+	- allowed up to 6 players to play the game
 
 Because of the size of the games we generated for our model, we don't have any of the games on this repo. Every other file is more or less how we found it after forking the original repo.
 
